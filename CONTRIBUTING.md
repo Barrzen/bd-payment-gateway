@@ -4,9 +4,10 @@
 
 - Rust stable (>= workspace `rust-version`)
 - `cargo fmt` + `cargo clippy`
+- `uv` for local Python tooling
 - Optional:
   - Node.js/Bun/Deno for N-API smoke tests
-  - Python 3.14 + maturin for Python wheels
+  - Python 3.14 for wheel builds
 
 ## Setup
 
@@ -27,7 +28,8 @@ cargo check --workspace --all-features
   - `cargo build -p bd-payment-gateway-js --all-features`
 - Python:
   - `cargo build -p bd-payment-gateway-py --all-features`
-  - `cd bd-payment-gateway-py && maturin build --release --features all-providers`
+  - `cd bd-payment-gateway-py && uv sync --group dev`
+  - `cd bd-payment-gateway-py && uv run maturin build --release --features all-providers`
 
 ## PR Checklist
 

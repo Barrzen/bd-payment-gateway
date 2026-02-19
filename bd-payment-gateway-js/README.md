@@ -20,18 +20,29 @@ Examples:
 
 ## API Shape
 
-- `create_shurjopay_client(configJson)`
-- `create_portwallet_client(configJson)`
-- `create_aamarpay_client(configJson)`
-- `create_sslcommerz_client(configJson)`
+Factory functions (camelCase):
 
-Each client exposes async methods:
+- `createShurjopayClient(config)`
+- `createPortwalletClient(config)`
+- `createAamarpayClient(config)`
+- `createSslcommerzClient(config)`
 
-- `initiate_payment(requestJson)`
-- `verify_payment(requestJson)`
-- `refund(requestJson)` (for providers with refund support)
+Backward-compatible aliases (snake_case) are also exported.
 
-Inputs are JSON strings that map directly to Rust request structs.
+Client methods:
+
+- `initiatePayment(request)`
+- `verifyPayment(request)`
+- `refund(request)` where supported
+
+Each method accepts either:
+
+- JSON string
+- typed JS object (recommended)
+
+## Typing
+
+`index.d.ts` includes typed config/request/response contracts for all providers.
 
 ## Error Contract
 
@@ -40,7 +51,3 @@ Rust errors are converted to JS `Error` with JSON payload string:
 - `message`
 - `code`
 - `hint`
-
-## TypeScript
-
-See `index.d.ts` for typed surface.

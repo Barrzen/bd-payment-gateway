@@ -4,6 +4,12 @@
   "description": "N-API bindings for Bangladesh payment gateway SDK",
   "main": "index.js",
   "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  },
   "files": [
     "index.js",
     "index.d.ts",

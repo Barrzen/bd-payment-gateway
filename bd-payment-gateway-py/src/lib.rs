@@ -2,8 +2,9 @@ use bd_payment_gateway_core::{BdPaymentError, Environment, PaymentProvider};
 use once_cell::sync::Lazy;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
+use pyo3::types::{PyAny, PyModule};
 use secrecy::SecretString;
-use serde::Deserialize;
+use serde::{de::DeserializeOwned, Deserialize};
 use serde_json::json;
 use tokio::runtime::Runtime;
 use url::Url;
@@ -61,6 +62,30 @@ struct RefundResponse {
     raw: String,
     #[pyo3(get)]
     request_id: Option<String>,
+}
+
+fn py_input_to_json(input: &Bound<'_, PyAny>, what: &str) -> PyResult<String> {
+    if let Ok(raw) = input.extract::<String>() {
+        return Ok(raw);
+    }
+
+    let json_mod = PyModule::import(input.py(), "json").map_err(|e| {
+        PyValueError::new_err(format!("Failed to import json module for {what}: {e}"))
+    })?;
+
+    json_mod
+        .call_method1("dumps", (input,))
+        .and_then(|v| v.extract::<String>())
+        .map_err(|e| {
+            PyValueError::new_err(format!(
+                "{what} must be a JSON string or a JSON-serializable mapping/object: {e}"
+            ))
+        })
+}
+
+fn parse_json_input<T: DeserializeOwned>(input: &Bound<'_, PyAny>, what: &str) -> PyResult<T> {
+    let raw = py_input_to_json(input, what)?;
+    serde_json::from_str(&raw).map_err(|e| PyValueError::new_err(format!("Invalid {what}: {e}")))
 }
 
 fn parse_environment(raw: EnvInput) -> PyResult<Environment> {
@@ -154,9 +179,8 @@ struct ShurjopayClient {
 #[pymethods]
 impl ShurjopayClient {
     #[new]
-    fn new(config_json: &str) -> PyResult<Self> {
-        let cfg: ShurjopayConfigInput =
-            serde_json::from_str(config_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+    fn new(config: &Bound<'_, PyAny>) -> PyResult<Self> {
+        let cfg: ShurjopayConfigInput = parse_json_input(config, "shurjoPay config")?;
         let config = bd_payment_gateway_shurjopay::Config {
             username: cfg.username,
             password: SecretString::new(cfg.password.into()),
@@ -169,9 +193,9 @@ impl ShurjopayClient {
         Ok(Self { inner })
     }
 
-    fn initiate_payment(&self, request_json: &str) -> PyResult<InitiatePaymentResponse> {
+    fn initiate_payment(&self, request: &Bound<'_, PyAny>) -> PyResult<InitiatePaymentResponse> {
         let request: bd_payment_gateway_shurjopay::InitiatePaymentRequest =
-            serde_json::from_str(request_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+            parse_json_input(request, "shurjoPay initiate request")?;
 
         let resp = RUNTIME
             .block_on(self.inner.initiate_payment(&request))
@@ -179,9 +203,9 @@ impl ShurjopayClient {
         Ok(map_initiate_response(resp))
     }
 
-    fn verify_payment(&self, request_json: &str) -> PyResult<VerifyPaymentResponse> {
+    fn verify_payment(&self, request: &Bound<'_, PyAny>) -> PyResult<VerifyPaymentResponse> {
         let request: bd_payment_gateway_shurjopay::VerifyPaymentRequest =
-            serde_json::from_str(request_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+            parse_json_input(request, "shurjoPay verify request")?;
 
         let resp = RUNTIME
             .block_on(self.inner.verify_payment(&request))
@@ -208,9 +232,8 @@ struct PortwalletClient {
 #[pymethods]
 impl PortwalletClient {
     #[new]
-    fn new(config_json: &str) -> PyResult<Self> {
-        let cfg: PortwalletConfigInput =
-            serde_json::from_str(config_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+    fn new(config: &Bound<'_, PyAny>) -> PyResult<Self> {
+        let cfg: PortwalletConfigInput = parse_json_input(config, "PortWallet config")?;
         let config = bd_payment_gateway_portwallet::Config {
             app_key: cfg.app_key,
             app_secret: SecretString::new(cfg.app_secret.into()),
@@ -222,27 +245,27 @@ impl PortwalletClient {
         Ok(Self { inner })
     }
 
-    fn initiate_payment(&self, request_json: &str) -> PyResult<InitiatePaymentResponse> {
+    fn initiate_payment(&self, request: &Bound<'_, PyAny>) -> PyResult<InitiatePaymentResponse> {
         let request: bd_payment_gateway_portwallet::InitiatePaymentRequest =
-            serde_json::from_str(request_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+            parse_json_input(request, "PortWallet initiate request")?;
         let resp = RUNTIME
             .block_on(self.inner.initiate_payment(&request))
             .map_err(to_py_err)?;
         Ok(map_initiate_response(resp))
     }
 
-    fn verify_payment(&self, request_json: &str) -> PyResult<VerifyPaymentResponse> {
+    fn verify_payment(&self, request: &Bound<'_, PyAny>) -> PyResult<VerifyPaymentResponse> {
         let request: bd_payment_gateway_portwallet::VerifyPaymentRequest =
-            serde_json::from_str(request_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+            parse_json_input(request, "PortWallet verify request")?;
         let resp = RUNTIME
             .block_on(self.inner.verify_payment(&request))
             .map_err(to_py_err)?;
         Ok(map_verify_response(resp))
     }
 
-    fn refund(&self, request_json: &str) -> PyResult<RefundResponse> {
+    fn refund(&self, request: &Bound<'_, PyAny>) -> PyResult<RefundResponse> {
         let request: bd_payment_gateway_portwallet::RefundRequest =
-            serde_json::from_str(request_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+            parse_json_input(request, "PortWallet refund request")?;
         let resp = RUNTIME
             .block_on(self.inner.refund(&request))
             .map_err(to_py_err)?;
@@ -268,9 +291,8 @@ struct AamarpayClient {
 #[pymethods]
 impl AamarpayClient {
     #[new]
-    fn new(config_json: &str) -> PyResult<Self> {
-        let cfg: AamarpayConfigInput =
-            serde_json::from_str(config_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+    fn new(config: &Bound<'_, PyAny>) -> PyResult<Self> {
+        let cfg: AamarpayConfigInput = parse_json_input(config, "aamarPay config")?;
         let config = bd_payment_gateway_aamarpay::Config {
             store_id: cfg.store_id,
             signature_key: SecretString::new(cfg.signature_key.into()),
@@ -281,18 +303,18 @@ impl AamarpayClient {
         Ok(Self { inner })
     }
 
-    fn initiate_payment(&self, request_json: &str) -> PyResult<InitiatePaymentResponse> {
+    fn initiate_payment(&self, request: &Bound<'_, PyAny>) -> PyResult<InitiatePaymentResponse> {
         let request: bd_payment_gateway_aamarpay::InitiatePaymentRequest =
-            serde_json::from_str(request_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+            parse_json_input(request, "aamarPay initiate request")?;
         let resp = RUNTIME
             .block_on(self.inner.initiate_payment(&request))
             .map_err(to_py_err)?;
         Ok(map_initiate_response(resp))
     }
 
-    fn verify_payment(&self, request_json: &str) -> PyResult<VerifyPaymentResponse> {
+    fn verify_payment(&self, request: &Bound<'_, PyAny>) -> PyResult<VerifyPaymentResponse> {
         let request: bd_payment_gateway_aamarpay::VerifyPaymentRequest =
-            serde_json::from_str(request_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+            parse_json_input(request, "aamarPay verify request")?;
         let resp = RUNTIME
             .block_on(self.inner.verify_payment(&request))
             .map_err(to_py_err)?;
@@ -318,9 +340,8 @@ struct SslcommerzClient {
 #[pymethods]
 impl SslcommerzClient {
     #[new]
-    fn new(config_json: &str) -> PyResult<Self> {
-        let cfg: SslcommerzConfigInput =
-            serde_json::from_str(config_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+    fn new(config: &Bound<'_, PyAny>) -> PyResult<Self> {
+        let cfg: SslcommerzConfigInput = parse_json_input(config, "SSLCOMMERZ config")?;
         let config = bd_payment_gateway_sslcommerz::Config {
             store_id: cfg.store_id,
             store_passwd: SecretString::new(cfg.store_passwd.into()),
@@ -332,27 +353,27 @@ impl SslcommerzClient {
         Ok(Self { inner })
     }
 
-    fn initiate_payment(&self, request_json: &str) -> PyResult<InitiatePaymentResponse> {
+    fn initiate_payment(&self, request: &Bound<'_, PyAny>) -> PyResult<InitiatePaymentResponse> {
         let request: bd_payment_gateway_sslcommerz::InitiatePaymentRequest =
-            serde_json::from_str(request_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+            parse_json_input(request, "SSLCOMMERZ initiate request")?;
         let resp = RUNTIME
             .block_on(self.inner.initiate_payment(&request))
             .map_err(to_py_err)?;
         Ok(map_initiate_response(resp))
     }
 
-    fn verify_payment(&self, request_json: &str) -> PyResult<VerifyPaymentResponse> {
+    fn verify_payment(&self, request: &Bound<'_, PyAny>) -> PyResult<VerifyPaymentResponse> {
         let request: bd_payment_gateway_sslcommerz::VerifyPaymentRequest =
-            serde_json::from_str(request_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+            parse_json_input(request, "SSLCOMMERZ verify request")?;
         let resp = RUNTIME
             .block_on(self.inner.verify_payment(&request))
             .map_err(to_py_err)?;
         Ok(map_verify_response(resp))
     }
 
-    fn refund(&self, request_json: &str) -> PyResult<RefundResponse> {
+    fn refund(&self, request: &Bound<'_, PyAny>) -> PyResult<RefundResponse> {
         let request: bd_payment_gateway_sslcommerz::RefundRequest =
-            serde_json::from_str(request_json).map_err(|e| PyValueError::new_err(e.to_string()))?;
+            parse_json_input(request, "SSLCOMMERZ refund request")?;
         let resp = RUNTIME
             .block_on(self.inner.refund(&request))
             .map_err(to_py_err)?;

@@ -85,13 +85,14 @@ Base URLs are mapped per provider docs in each crate.
 
 - Crate: `bd-payment-gateway-js`
 - Build with provider feature flags (Option 2 modular strategy)
-- Includes TypeScript definitions and runtime notes in `bd-payment-gateway-js/README.md`
+- Includes TypeScript request/config/response types in `bd-payment-gateway-js/index.d.ts`
 
 ### Python (3.14+)
 
 - Crate: `bd-payment-gateway-py`
 - Built with PyO3 + maturin (abi3)
-- Typing stubs included; see `bd-payment-gateway-py/README.md`
+- Local Python workflow uses `uv`
+- Typing stubs included; see `bd-payment-gateway-py/bd_payment_gateway_py.pyi`
 
 ## Development
 
@@ -99,6 +100,7 @@ Base URLs are mapped per provider docs in each crate.
 - `cargo clippy --workspace --all-features --all-targets -- -D warnings`
 - `cargo test --workspace --all-features`
 - `cargo run -p bd-payment-gateway --example portwallet_initiate_verify --features portwallet`
+- `cd bd-payment-gateway-py && uv sync --group dev && uv run maturin build --release --features all-providers`
 
 See:
 

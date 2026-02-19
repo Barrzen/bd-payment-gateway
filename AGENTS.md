@@ -42,6 +42,7 @@ Goals:
 - `cargo clippy -- -D warnings` required
 - Prefer small modules, typed request/response structs, explicit validation
 - Avoid panics in library code
+- For JS/Python bindings, expose typed request/config contracts (TypeScript + `.pyi`)
 
 ### Error Format
 
@@ -77,8 +78,9 @@ Bindings:
 
 - JS build: `cargo build -p bd-payment-gateway-js --all-features`
 - Python build: `cargo build -p bd-payment-gateway-py --all-features`
-- Python wheel (maturin):
-  - `cd bd-payment-gateway-py && maturin build --release --features all-providers`
+- Python env/tooling: use `uv` locally
+  - `cd bd-payment-gateway-py && uv sync --group dev`
+  - `cd bd-payment-gateway-py && uv run maturin build --release --features all-providers`
 
 ## Add New Provider in 30 Minutes (Checklist)
 

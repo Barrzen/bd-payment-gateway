@@ -6,17 +6,26 @@ PyO3 bindings for `bd-payment-gateway`.
 
 - Python 3.14 supported (built with `abi3`, minimum ABI 3.9)
 
+## Local Tooling
+
+Use `uv` locally for Python dependency and command execution.
+
+```bash
+cd bd-payment-gateway-py
+uv sync --group dev
+```
+
 ## Build
 
 ```bash
 cd bd-payment-gateway-py
-maturin build --release --features all-providers
+uv run maturin build --release --features all-providers
 ```
 
 Build only one provider:
 
 ```bash
-maturin build --release --features portwallet
+uv run maturin build --release --features portwallet
 ```
 
 ## API
@@ -28,13 +37,21 @@ Provider-specific classes:
 - `AamarpayClient`
 - `SslcommerzClient`
 
-Each constructor accepts config JSON string.
+Constructors and methods accept either:
+
+- JSON string
+- Typed Python mapping/dict (recommended)
 
 Methods:
 
-- `initiate_payment(request_json: str)`
-- `verify_payment(request_json: str)`
-- `refund(request_json: str)` where supported
+- `initiate_payment(request)`
+- `verify_payment(request)`
+- `refund(request)` where supported
+
+## Typing
+
+- Typed request/config contracts are provided in `bd_payment_gateway_py.pyi`.
+- `pydantic` is available in dev dependencies if you want stronger runtime validation in app code.
 
 ## Error Contract
 
@@ -43,7 +60,3 @@ Errors raise `PaymentGatewayError` with JSON payload string including:
 - `message`
 - `code`
 - `hint`
-
-## Typing
-
-Typing stubs are provided in `bd_payment_gateway_py.pyi`.
