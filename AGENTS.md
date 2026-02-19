@@ -79,6 +79,7 @@ Bindings:
 - JS build: `cargo build -p bd-payment-gateway-js --all-features`
 - Python build: `cargo build -p bd-payment-gateway-py --all-features`
 - Python env/tooling: use `uv` locally
+  - `source $HOME/.local/bin/env`
   - `cd bd-payment-gateway-py && uv sync --group dev`
   - `cd bd-payment-gateway-py && uv run maturin build --release --features all-providers`
 

@@ -11,6 +11,7 @@ PyO3 bindings for `bd-payment-gateway`.
 Use `uv` locally for Python dependency and command execution.
 
 ```bash
+source $HOME/.local/bin/env
 cd bd-payment-gateway-py
 uv sync --group dev
 ```
@@ -18,6 +19,7 @@ uv sync --group dev
 ## Build
 
 ```bash
+source $HOME/.local/bin/env
 cd bd-payment-gateway-py
 uv run maturin build --release --features all-providers
 ```
@@ -25,6 +27,7 @@ uv run maturin build --release --features all-providers
 Build only one provider:
 
 ```bash
+source $HOME/.local/bin/env
 uv run maturin build --release --features portwallet
 ```
 

@@ -100,6 +100,7 @@ Base URLs are mapped per provider docs in each crate.
 - `cargo clippy --workspace --all-features --all-targets -- -D warnings`
 - `cargo test --workspace --all-features`
 - `cargo run -p bd-payment-gateway --example portwallet_initiate_verify --features portwallet`
+- `source $HOME/.local/bin/env`
 - `cd bd-payment-gateway-py && uv sync --group dev && uv run maturin build --release --features all-providers`
 
 See:
