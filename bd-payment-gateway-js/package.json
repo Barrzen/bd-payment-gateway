@@ -1,0 +1,15 @@
+{
+  "name": "bd-payment-gateway",
+  "version": "0.1.0",
+  "description": "N-API bindings for Bangladesh payment gateway SDK",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "*.node"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

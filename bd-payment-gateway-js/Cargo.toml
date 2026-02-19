@@ -1,0 +1,36 @@
+[package]
+name = "bd-payment-gateway-js"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+description = "N-API bindings for bd-payment-gateway"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = []
+shurjopay = ["dep:bd-payment-gateway-shurjopay"]
+portwallet = ["dep:bd-payment-gateway-portwallet"]
+aamarpay = ["dep:bd-payment-gateway-aamarpay"]
+sslcommerz = ["dep:bd-payment-gateway-sslcommerz"]
+all-providers = ["shurjopay", "portwallet", "aamarpay", "sslcommerz"]
+
+[dependencies]
+bd-payment-gateway-core = { path = "../bd-payment-gateway-core" }
+bd-payment-gateway-shurjopay = { path = "../bd-payment-gateway-shurjopay", optional = true }
+bd-payment-gateway-portwallet = { path = "../bd-payment-gateway-portwallet", optional = true }
+bd-payment-gateway-aamarpay = { path = "../bd-payment-gateway-aamarpay", optional = true }
+bd-payment-gateway-sslcommerz = { path = "../bd-payment-gateway-sslcommerz", optional = true }
+napi.workspace = true
+napi-derive.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+url.workspace = true
+secrecy.workspace = true
+
+[build-dependencies]
+napi-build = "2"

@@ -1,0 +1,29 @@
+[package]
+name = "bd-payment-gateway"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+description = "Feature-gated facade crate for Bangladesh payment gateway SDK"
+
+[features]
+default = []
+shurjopay = ["dep:bd-payment-gateway-shurjopay"]
+portwallet = ["dep:bd-payment-gateway-portwallet"]
+aamarpay = ["dep:bd-payment-gateway-aamarpay"]
+sslcommerz = ["dep:bd-payment-gateway-sslcommerz"]
+all-providers = ["shurjopay", "portwallet", "aamarpay", "sslcommerz"]
+
+[dependencies]
+bd-payment-gateway-core = { path = "../bd-payment-gateway-core" }
+bd-payment-gateway-shurjopay = { path = "../bd-payment-gateway-shurjopay", optional = true }
+bd-payment-gateway-portwallet = { path = "../bd-payment-gateway-portwallet", optional = true }
+bd-payment-gateway-aamarpay = { path = "../bd-payment-gateway-aamarpay", optional = true }
+bd-payment-gateway-sslcommerz = { path = "../bd-payment-gateway-sslcommerz", optional = true }
+
+[dev-dependencies]
+tokio.workspace = true
+secrecy.workspace = true
+url.workspace = true

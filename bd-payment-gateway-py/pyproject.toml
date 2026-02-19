@@ -1,0 +1,19 @@
+[build-system]
+requires = ["maturin>=1.8,<2"]
+build-backend = "maturin"
+
+[project]
+name = "bd-payment-gateway"
+version = "0.1.0"
+description = "Python bindings for Bangladesh payment gateway SDK"
+requires-python = ">=3.9"
+classifiers = [
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Rust",
+]
+
+[tool.maturin]
+features = ["all-providers"]
+module-name = "bd_payment_gateway_py"

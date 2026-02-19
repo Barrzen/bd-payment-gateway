@@ -1,0 +1,28 @@
+[package]
+name = "bd-payment-gateway-core"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+authors = ["bd-payment-gateway contributors"]
+description = "Core abstractions and shared runtime for Bangladesh payment gateway SDKs"
+
+[dependencies]
+async-trait.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_urlencoded.workspace = true
+thiserror.workspace = true
+url.workspace = true
+secrecy.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+rust_decimal.workspace = true
+http.workspace = true
+
+[dev-dependencies]
+httpmock.workspace = true
