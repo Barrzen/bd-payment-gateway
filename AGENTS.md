@@ -69,6 +69,13 @@ Goals:
 
 ## Runbook (Local)
 
+- Minimal commands with `just`:
+  - `just quality`
+  - `just fmt`
+  - `just lint`
+  - `just test`
+  - `just example portwallet`
+  - `just py-wheel all-providers`
 - Format: `cargo fmt --all`
 - Lint: `cargo clippy --workspace --all-features --all-targets -- -D warnings`
 - Test: `cargo test --workspace --all-features`

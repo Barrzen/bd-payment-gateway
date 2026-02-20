@@ -4,6 +4,7 @@
 
 - Rust stable 1.93.0 (workspace baseline, edition 2024)
 - `cargo fmt` + `cargo clippy`
+- `just` for short local commands
 - `uv` for local Python tooling
 - Optional:
   - Node.js/Bun/Deno for N-API smoke tests
@@ -12,11 +13,27 @@
 ## Setup
 
 ```bash
+just quality
+```
+
+or
+
+```bash
 cargo check --workspace --all-features
 ./scripts/quality-check.sh
 ```
 
 ## Standard Commands
+
+- Use `just --list` to see all shortcuts.
+- Recommended:
+  - `just quality`
+  - `just fmt`
+  - `just lint`
+  - `just test`
+  - `just py-wheel all-providers`
+
+Raw equivalents:
 
 - Format: `cargo fmt --all`
 - Lint: `cargo clippy --workspace --all-features --all-targets -- -D warnings`
