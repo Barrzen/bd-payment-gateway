@@ -111,8 +111,8 @@ See:
 
 ## Official API Docs Used
 
-- https://shurjopay.com.bd/developers/shurjopay-restapi
-- https://developer.portwallet.com/documentation-v2.php
-- https://aamarpay.readme.io/reference/overview
-- https://aamarpay.readme.io/reference/initiate-payment-json
-- https://sslcommerz.com/integration-document/
+- <https://shurjopay.com.bd/developers/shurjopay-restapi>
+- <https://developer.portwallet.com/documentation-v2.php>
+- <https://aamarpay.readme.io/reference/overview>
+- <https://aamarpay.readme.io/reference/initiate-payment-json>
+- <https://sslcommerz.com/integration-document/>
