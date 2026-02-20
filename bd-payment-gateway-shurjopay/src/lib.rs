@@ -1,13 +1,13 @@
 use async_trait::async_trait;
 use bd_payment_gateway_core::{
-    http::add_default_headers, BdPaymentError, Environment, HttpClient, HttpSettings,
-    InitiatePaymentResponse, PaymentProvider, PaymentStatus, RefundResponse, Result,
-    VerifyPaymentResponse,
+    BdPaymentError, Environment, HttpClient, HttpSettings, InitiatePaymentResponse,
+    PaymentProvider, PaymentStatus, RefundResponse, Result, VerifyPaymentResponse,
+    http::add_default_headers,
 };
-use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
+use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue};
 use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use url::Url;
 
 const SANDBOX_BASE: &str = "https://sandbox.shurjopayment.com";

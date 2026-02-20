@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Rust stable (>= workspace `rust-version`)
+- Rust stable 1.93.0 (workspace baseline, edition 2024)
 - `cargo fmt` + `cargo clippy`
 - `uv` for local Python tooling
 - Optional:
@@ -13,6 +13,7 @@
 
 ```bash
 cargo check --workspace --all-features
+./scripts/quality-check.sh
 ```
 
 ## Standard Commands
@@ -20,6 +21,9 @@ cargo check --workspace --all-features
 - Format: `cargo fmt --all`
 - Lint: `cargo clippy --workspace --all-features --all-targets -- -D warnings`
 - Tests: `cargo test --workspace --all-features`
+- No-feature binding warning gate:
+  - `RUSTFLAGS='-D warnings' cargo check -p bd-payment-gateway-js --no-default-features`
+  - `RUSTFLAGS='-D warnings' cargo check -p bd-payment-gateway-py --no-default-features`
 - Examples: `cargo run -p bd-payment-gateway --example sslcommerz_initiate_verify --features sslcommerz`
 
 ## Binding Builds

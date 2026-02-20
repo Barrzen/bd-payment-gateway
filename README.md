@@ -2,6 +2,11 @@
 
 Production-grade, modular Rust SDK workspace for Bangladesh payment gateways.
 
+Toolchain baseline:
+
+- Rust `1.93.0`
+- Rust edition `2024`
+
 ## Supported Providers
 
 - shurjoPay REST API (`bd-payment-gateway-shurjopay`)
@@ -102,6 +107,7 @@ Base URLs are mapped per provider docs in each crate.
 - `cargo run -p bd-payment-gateway --example portwallet_initiate_verify --features portwallet`
 - `source $HOME/.local/bin/env`
 - `cd bd-payment-gateway-py && uv sync --group dev && uv run maturin build --release --features all-providers`
+- `./scripts/quality-check.sh` (root common quality/binding/provider test suite)
 
 See:
 

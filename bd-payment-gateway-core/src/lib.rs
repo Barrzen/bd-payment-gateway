@@ -5,7 +5,7 @@ pub mod types;
 
 pub use error::{BdPaymentError, ErrorCode, Result};
 pub use http::{
-    generate_correlation_id, generate_idempotency_key, HttpClient, HttpLogger, HttpSettings,
+    HttpClient, HttpLogger, HttpSettings, generate_correlation_id, generate_idempotency_key,
 };
 pub use provider::{
     InitiatePaymentResponse, PaymentProvider, PaymentStatus, RefundResponse, RefundStatus,

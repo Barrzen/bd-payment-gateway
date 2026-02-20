@@ -1,5 +1,15 @@
+#![cfg_attr(
+    not(any(
+        feature = "shurjopay",
+        feature = "portwallet",
+        feature = "aamarpay",
+        feature = "sslcommerz"
+    )),
+    allow(dead_code, unused_imports)
+)]
+
 use bd_payment_gateway_core::{BdPaymentError, Environment, PaymentProvider};
-use napi::{bindgen_prelude::*, Status};
+use napi::{Status, bindgen_prelude::*};
 use napi_derive::napi;
 use secrecy::SecretString;
 use serde::Deserialize;

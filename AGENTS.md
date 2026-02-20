@@ -38,6 +38,7 @@ Goals:
 ### Rust Style
 
 - Rust stable only
+- Workspace baseline: Rust `1.93.0`, edition `2024`
 - `cargo fmt` required
 - `cargo clippy -- -D warnings` required
 - Prefer small modules, typed request/response structs, explicit validation
@@ -71,6 +72,7 @@ Goals:
 - Format: `cargo fmt --all`
 - Lint: `cargo clippy --workspace --all-features --all-targets -- -D warnings`
 - Test: `cargo test --workspace --all-features`
+- Root quality suite: `./scripts/quality-check.sh`
 - Run example:
   - `cargo run -p bd-payment-gateway --example portwallet_initiate_verify --features portwallet`
 

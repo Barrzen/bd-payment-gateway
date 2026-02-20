@@ -5,10 +5,10 @@ use std::{
 };
 
 use reqwest::{
-    header::{HeaderMap, HeaderName, HeaderValue},
     Method, StatusCode,
+    header::{HeaderMap, HeaderName, HeaderValue},
 };
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use serde_json::Value;
 use tokio::time::sleep;
 use tracing::{debug, warn};

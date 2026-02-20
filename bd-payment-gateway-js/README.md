@@ -18,6 +18,8 @@ Examples:
 - `cargo build -p bd-payment-gateway-js --features portwallet`
 - `cargo build -p bd-payment-gateway-js --features all-providers`
 
+If a provider was not enabled during native build, its factory function throws an actionable error that names the missing Rust feature.
+
 ## API Shape
 
 Factory functions (camelCase):

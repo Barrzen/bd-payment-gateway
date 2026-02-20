@@ -46,6 +46,16 @@ function normalizeResponse(response) {
   return response;
 }
 
+function requireNativeFunction(functionName, featureName) {
+  const fn = native[functionName];
+  if (typeof fn === 'function') {
+    return fn;
+  }
+  throw new Error(
+    `${functionName} is unavailable in this native build. Rebuild bd-payment-gateway-js with feature '${featureName}'.`
+  );
+}
+
 class ShurjopayClient {
   constructor(inner) {
     this.inner = inner;
@@ -151,19 +161,23 @@ class SslcommerzClient {
 }
 
 function createShurjopayClient(config) {
-  return new ShurjopayClient(native.create_shurjopay_client(normalizeInput(config)));
+  const factory = requireNativeFunction('create_shurjopay_client', 'shurjopay');
+  return new ShurjopayClient(factory(normalizeInput(config)));
 }
 
 function createPortwalletClient(config) {
-  return new PortwalletClient(native.create_portwallet_client(normalizeInput(config)));
+  const factory = requireNativeFunction('create_portwallet_client', 'portwallet');
+  return new PortwalletClient(factory(normalizeInput(config)));
 }
 
 function createAamarpayClient(config) {
-  return new AamarpayClient(native.create_aamarpay_client(normalizeInput(config)));
+  const factory = requireNativeFunction('create_aamarpay_client', 'aamarpay');
+  return new AamarpayClient(factory(normalizeInput(config)));
 }
 
 function createSslcommerzClient(config) {
-  return new SslcommerzClient(native.create_sslcommerz_client(normalizeInput(config)));
+  const factory = requireNativeFunction('create_sslcommerz_client', 'sslcommerz');
+  return new SslcommerzClient(factory(normalizeInput(config)));
 }
 
 module.exports = {

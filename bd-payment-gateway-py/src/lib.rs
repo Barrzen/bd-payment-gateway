@@ -1,10 +1,20 @@
+#![cfg_attr(
+    not(any(
+        feature = "shurjopay",
+        feature = "portwallet",
+        feature = "aamarpay",
+        feature = "sslcommerz"
+    )),
+    allow(dead_code, unused_imports)
+)]
+
 use bd_payment_gateway_core::{BdPaymentError, Environment, PaymentProvider};
 use once_cell::sync::Lazy;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyModule};
 use secrecy::SecretString;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 use serde_json::json;
 use tokio::runtime::Runtime;
 use url::Url;

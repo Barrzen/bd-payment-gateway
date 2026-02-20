@@ -2,9 +2,9 @@ use std::str::FromStr;
 
 use async_trait::async_trait;
 use bd_payment_gateway_core::{
-    http::add_default_headers, BdPaymentError, Currency, Environment, HttpClient, HttpSettings,
-    InitiatePaymentResponse, PaymentProvider, PaymentStatus, RefundResponse, RefundStatus, Result,
-    VerifyPaymentResponse,
+    BdPaymentError, Currency, Environment, HttpClient, HttpSettings, InitiatePaymentResponse,
+    PaymentProvider, PaymentStatus, RefundResponse, RefundStatus, Result, VerifyPaymentResponse,
+    http::add_default_headers,
 };
 use chrono::Utc;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
