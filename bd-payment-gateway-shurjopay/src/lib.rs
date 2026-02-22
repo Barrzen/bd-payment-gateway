@@ -194,10 +194,15 @@ struct SecretPayRequest<'a> {
     cancel_url: &'a str,
     amount: &'a str,
     order_id: &'a str,
-    #[serde(rename = "discsount_amount", skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     discount_amount: Option<&'a str>,
-    #[serde(rename = "disc_percent", skip_serializing_if = "Option::is_none")]
+    // Keep legacy key for backward compatibility with provider-side variants seen in docs/examples.
+    #[serde(rename = "discsount_amount", skip_serializing_if = "Option::is_none")]
+    legacy_discount_amount: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     discount_percent: Option<&'a str>,
+    #[serde(rename = "disc_percent", skip_serializing_if = "Option::is_none")]
+    legacy_discount_percent: Option<&'a str>,
     client_ip: &'a str,
     customer_name: &'a str,
     customer_phone: &'a str,
@@ -247,7 +252,9 @@ impl PaymentProvider for ShurjopayClient {
             amount: &req.amount,
             order_id: &req.order_id,
             discount_amount: req.discount_amount.as_deref(),
+            legacy_discount_amount: req.discount_amount.as_deref(),
             discount_percent: req.discount_percent.as_deref(),
+            legacy_discount_percent: req.discount_percent.as_deref(),
             client_ip: &req.client_ip,
             customer_name: &req.customer_name,
             customer_phone: &req.customer_phone,
@@ -405,6 +412,53 @@ mod tests {
         };
 
         assert!(req.validate().is_err());
+    }
+
+    #[test]
+    fn serializes_discount_fields_with_compatibility_keys() {
+        let payload = SecretPayRequest {
+            prefix: "PX",
+            currency: "BDT",
+            return_url: "https://merchant.test/ok",
+            cancel_url: "https://merchant.test/cancel",
+            amount: "100.00",
+            order_id: "ORD-1",
+            discount_amount: Some("5.00"),
+            legacy_discount_amount: Some("5.00"),
+            discount_percent: Some("5"),
+            legacy_discount_percent: Some("5"),
+            client_ip: "127.0.0.1",
+            customer_name: "Demo User",
+            customer_phone: "01700000000",
+            customer_email: "demo@example.com",
+            customer_address: "Dhaka",
+            customer_city: "Dhaka",
+            customer_state: "Dhaka",
+            customer_postcode: "1207",
+            customer_country: "Bangladesh",
+            value1: None,
+            value2: None,
+            value3: None,
+            value4: None,
+        };
+
+        let serialized = serde_json::to_value(payload).expect("serializable request");
+        assert_eq!(
+            serialized.get("discount_amount"),
+            Some(&Value::String("5.00".to_owned()))
+        );
+        assert_eq!(
+            serialized.get("discsount_amount"),
+            Some(&Value::String("5.00".to_owned()))
+        );
+        assert_eq!(
+            serialized.get("discount_percent"),
+            Some(&Value::String("5".to_owned()))
+        );
+        assert_eq!(
+            serialized.get("disc_percent"),
+            Some(&Value::String("5".to_owned()))
+        );
     }
 
     #[tokio::test]
