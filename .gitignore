@@ -6,3 +6,5 @@ Cargo.lock
 node_modules
 .venv
 __pycache__
+bd-payment-gateway-py/examples/.env
+bd-payment-gateway-py/examples/sslcommerz-credential-sandbox.png

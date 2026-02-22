@@ -59,6 +59,25 @@ Methods:
 - `verify_payment(request)`
 - `refund(request)` where supported
 
+## Smoke Test Example
+
+Run SSLCOMMERZ sandbox full-flow test (real initiate + verify polling):
+
+```bash
+cd bd-payment-gateway-py
+uv run python examples/smoke_test.py
+```
+
+Recommended environment variables (override temporary hardcoded sandbox credentials):
+
+```bash
+export SSLCOMMERZ_STORE_ID="your_store_id"
+export SSLCOMMERZ_STORE_PASSWD="your_store_passwd"
+export SSLCOMMERZ_RETURN_BASE_URL="https://your-registered-domain.com"
+```
+
+Or create a local `examples/.env` file from `examples/.env.example`.
+
 ## Typing
 
 - Typed request/config contracts are provided in `bd_payment_gateway_py.pyi`.
