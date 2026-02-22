@@ -42,6 +42,14 @@ Each method accepts either:
 - JSON string
 - typed JS object (recommended)
 
+Config payloads may include optional `http_settings`:
+
+- `timeout_ms`
+- `max_retries`
+- `initial_backoff_ms`
+- `max_backoff_ms`
+- `user_agent`
+
 ## Typing
 
 `index.d.ts` includes typed config/request/response contracts for all providers.

@@ -23,7 +23,7 @@ Toolchain baseline:
 - `bd-payment-gateway-sslcommerz`: SSLCOMMERZ implementation
 - `bd-payment-gateway`: feature-gated facade crate (default features: none)
 - `bd-payment-gateway-js`: N-API bindings for Node/Bun/Deno
-- `bd-payment-gateway-py`: PyO3/maturin bindings for Python 3.14+
+- `bd-payment-gateway-py`: PyO3/maturin bindings for Python 3.9+
 
 ## Install (Rust)
 
@@ -92,10 +92,10 @@ Base URLs are mapped per provider docs in each crate.
 - Build with provider feature flags (Option 2 modular strategy)
 - Includes TypeScript request/config/response types in `bd-payment-gateway-js/index.d.ts`
 
-### Python (3.14+)
+### Python (3.9+)
 
 - Crate: `bd-payment-gateway-py`
-- Built with PyO3 + maturin (abi3)
+- Built with PyO3 + maturin (abi3, minimum ABI 3.9; tested in CI on Python 3.14)
 - Local Python workflow uses `uv`
 - Typing stubs included; see `bd-payment-gateway-py/bd_payment_gateway_py.pyi`
 

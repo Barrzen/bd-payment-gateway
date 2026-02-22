@@ -4,7 +4,7 @@ PyO3 bindings for `bd-payment-gateway`.
 
 ## Python Support
 
-- Python 3.14 supported (built with `abi3`, minimum ABI 3.9)
+- Python 3.9+ supported (built with `abi3`, minimum ABI 3.9; tested on 3.14 in CI)
 
 ## Local Tooling
 
@@ -44,6 +44,14 @@ Constructors and methods accept either:
 
 - JSON string
 - Typed Python mapping/dict (recommended)
+
+Config payloads may include optional `http_settings`:
+
+- `timeout_ms`
+- `max_retries`
+- `initial_backoff_ms`
+- `max_backoff_ms`
+- `user_agent`
 
 Methods:
 

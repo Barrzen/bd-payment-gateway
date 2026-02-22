@@ -5,6 +5,14 @@ export interface EnvironmentConfig {
   custom_base_url?: string;
 }
 
+export interface HttpSettingsConfig {
+  timeout_ms?: number;
+  max_retries?: number;
+  initial_backoff_ms?: number;
+  max_backoff_ms?: number;
+  user_agent?: string;
+}
+
 export interface InitiatePaymentResponse {
   redirect_url: string;
   provider_reference: string;
@@ -33,6 +41,7 @@ export interface ShurjopayConfig {
   password: string;
   prefix: string;
   environment: EnvironmentConfig;
+  http_settings?: HttpSettingsConfig;
 }
 
 export interface ShurjopayInitiateRequest {
@@ -68,6 +77,7 @@ export interface PortwalletConfig {
   app_key: string;
   app_secret: string;
   environment: EnvironmentConfig;
+  http_settings?: HttpSettingsConfig;
 }
 
 export interface PortwalletCustomer {
@@ -107,6 +117,7 @@ export interface AamarpayConfig {
   store_id: string;
   signature_key: string;
   environment: EnvironmentConfig;
+  http_settings?: HttpSettingsConfig;
 }
 
 export interface AamarpayInitiateRequest {
@@ -141,6 +152,7 @@ export interface SslcommerzConfig {
   store_id: string;
   store_passwd: string;
   environment: EnvironmentConfig;
+  http_settings?: HttpSettingsConfig;
 }
 
 export interface SslcommerzInitiateRequest {

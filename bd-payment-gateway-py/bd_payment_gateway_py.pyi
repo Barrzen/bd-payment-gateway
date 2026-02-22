@@ -3,13 +3,16 @@ from typing_extensions import NotRequired, TypeAlias
 
 JsonInput: TypeAlias = str | Mapping[str, Any]
 
+
 class PaymentGatewayError(Exception): ...
+
 
 class InitiatePaymentResponse:
     redirect_url: str
     provider_reference: str
     raw: str
     request_id: str | None
+
 
 class VerifyPaymentResponse:
     status: str
@@ -19,23 +22,36 @@ class VerifyPaymentResponse:
     raw: str
     request_id: str | None
 
+
 class RefundResponse:
     status: str
     provider_reference: str
     raw: str
     request_id: str | None
 
+
 class EnvironmentConfig(TypedDict):
     mode: str
     custom_base_url: NotRequired[str]
+
+
+class HttpSettingsConfig(TypedDict):
+    timeout_ms: NotRequired[int]
+    max_retries: NotRequired[int]
+    initial_backoff_ms: NotRequired[int]
+    max_backoff_ms: NotRequired[int]
+    user_agent: NotRequired[str]
+
 
 class ShurjopayConfig(TypedDict):
     username: str
     password: str
     prefix: str
     environment: EnvironmentConfig
+    http_settings: NotRequired[HttpSettingsConfig]
 
-class ShurjopayInitiateRequest(TypedDict, total=False):
+
+class ShurjopayInitiateRequest(TypedDict):
     amount: str
     order_id: str
     currency: str
@@ -50,97 +66,109 @@ class ShurjopayInitiateRequest(TypedDict, total=False):
     customer_state: str
     customer_postcode: str
     customer_country: str
-    value1: str
-    value2: str
-    value3: str
-    value4: str
-    discount_amount: str
-    discount_percent: str
-    correlation_id: str
+    value1: NotRequired[str]
+    value2: NotRequired[str]
+    value3: NotRequired[str]
+    value4: NotRequired[str]
+    discount_amount: NotRequired[str]
+    discount_percent: NotRequired[str]
+    correlation_id: NotRequired[str]
 
-class ShurjopayVerifyRequest(TypedDict, total=False):
+
+class ShurjopayVerifyRequest(TypedDict):
     sp_order_id: str
-    correlation_id: str
+    correlation_id: NotRequired[str]
+
 
 class PortwalletConfig(TypedDict):
     app_key: str
     app_secret: str
     environment: EnvironmentConfig
+    http_settings: NotRequired[HttpSettingsConfig]
 
-class PortwalletCustomer(TypedDict, total=False):
+
+class PortwalletCustomer(TypedDict):
     name: str
     email: str
     phone: str
-    address: str
-    city: str
-    zip_code: str
-    country: str
+    address: NotRequired[str]
+    city: NotRequired[str]
+    zip_code: NotRequired[str]
+    country: NotRequired[str]
 
-class PortwalletInitiateRequest(TypedDict, total=False):
+
+class PortwalletInitiateRequest(TypedDict):
     order: str
     amount: str
     currency: str
     redirect_url: str
     ipn_url: str
-    reference: str
     customer: PortwalletCustomer
-    correlation_id: str
+    reference: NotRequired[str]
+    correlation_id: NotRequired[str]
 
-class PortwalletVerifyRequest(TypedDict, total=False):
+
+class PortwalletVerifyRequest(TypedDict):
     invoice_id: str
-    correlation_id: str
+    correlation_id: NotRequired[str]
 
-class PortwalletRefundRequest(TypedDict, total=False):
+
+class PortwalletRefundRequest(TypedDict):
     invoice_id: str
     amount: str
-    reason: str
-    correlation_id: str
+    reason: NotRequired[str]
+    correlation_id: NotRequired[str]
+
 
 class AamarpayConfig(TypedDict):
     store_id: str
     signature_key: str
     environment: EnvironmentConfig
+    http_settings: NotRequired[HttpSettingsConfig]
 
-class AamarpayInitiateRequest(TypedDict, total=False):
+
+class AamarpayInitiateRequest(TypedDict):
     tran_id: str
     amount: str
     currency: str
     success_url: str
     fail_url: str
     cancel_url: str
-    desc: str
     cus_name: str
     cus_email: str
     cus_add1: str
-    cus_add2: str
     cus_city: str
-    cus_state: str
-    cus_postcode: str
     cus_country: str
     cus_phone: str
-    opt_a: str
-    opt_b: str
-    opt_c: str
-    opt_d: str
-    signature_key: str
+    desc: NotRequired[str]
+    cus_add2: NotRequired[str]
+    cus_state: NotRequired[str]
+    cus_postcode: NotRequired[str]
+    opt_a: NotRequired[str]
+    opt_b: NotRequired[str]
+    opt_c: NotRequired[str]
+    opt_d: NotRequired[str]
+    signature_key: NotRequired[str]
+
 
 class AamarpayVerifyRequest(TypedDict):
     request_id: str
+
 
 class SslcommerzConfig(TypedDict):
     store_id: str
     store_passwd: str
     environment: EnvironmentConfig
+    http_settings: NotRequired[HttpSettingsConfig]
 
-class SslcommerzInitiateRequest(TypedDict, total=False):
+
+class SslcommerzInitiateRequest(TypedDict):
     total_amount: str
     currency: str
     tran_id: str
     success_url: str
     fail_url: str
     cancel_url: str
-    ipn_url: str
-    shipping_method: str
     product_name: str
     product_category: str
     product_profile: str
@@ -150,18 +178,74 @@ class SslcommerzInitiateRequest(TypedDict, total=False):
     cus_city: str
     cus_country: str
     cus_phone: str
-    value_a: str
-    value_b: str
-    value_c: str
-    value_d: str
+    ipn_url: NotRequired[str]
+    shipping_method: NotRequired[str]
+    value_a: NotRequired[str]
+    value_b: NotRequired[str]
+    value_c: NotRequired[str]
+    value_d: NotRequired[str]
+
+
+class _SslcommerzValIdRef(TypedDict):
+    ValId: str
+
+
+class _SslcommerzSessionKeyRef(TypedDict):
+    SessionKey: str
+
+
+class _SslcommerzTranIdRef(TypedDict):
+    TranId: str
+
+
+class SslcommerzVerifyByValId(TypedDict):
+    reference: _SslcommerzValIdRef
+
+
+class SslcommerzVerifyBySessionKey(TypedDict):
+    reference: _SslcommerzSessionKeyRef
+
+
+class SslcommerzVerifyByTranId(TypedDict):
+    reference: _SslcommerzTranIdRef
+
+
+SslcommerzVerifyRequest: TypeAlias = (
+    SslcommerzVerifyByValId | SslcommerzVerifyBySessionKey | SslcommerzVerifyByTranId
+)
+
+
+class _SslcommerzRefundInitiateBody(TypedDict):
+    bank_tran_id: str
+    refund_amount: str
+    refund_remarks: str
+
+
+class _SslcommerzRefundQueryBody(TypedDict):
+    refund_ref_id: str
+
+
+class SslcommerzRefundInitiate(TypedDict):
+    Initiate: _SslcommerzRefundInitiateBody
+
+
+class SslcommerzRefundQuery(TypedDict):
+    Query: _SslcommerzRefundQueryBody
+
+
+SslcommerzRefundRequest: TypeAlias = SslcommerzRefundInitiate | SslcommerzRefundQuery
+
 
 class SslcommerzClient:
     def __init__(self, config: JsonInput | SslcommerzConfig) -> None: ...
     def initiate_payment(
         self, request: JsonInput | SslcommerzInitiateRequest
     ) -> InitiatePaymentResponse: ...
-    def verify_payment(self, request: JsonInput | Mapping[str, Any]) -> VerifyPaymentResponse: ...
-    def refund(self, request: JsonInput | Mapping[str, Any]) -> RefundResponse: ...
+    def verify_payment(
+        self, request: JsonInput | SslcommerzVerifyRequest
+    ) -> VerifyPaymentResponse: ...
+    def refund(self, request: JsonInput | SslcommerzRefundRequest) -> RefundResponse: ...
+
 
 class ShurjopayClient:
     def __init__(self, config: JsonInput | ShurjopayConfig) -> None: ...
@@ -172,6 +256,7 @@ class ShurjopayClient:
         self, request: JsonInput | ShurjopayVerifyRequest
     ) -> VerifyPaymentResponse: ...
 
+
 class PortwalletClient:
     def __init__(self, config: JsonInput | PortwalletConfig) -> None: ...
     def initiate_payment(
@@ -181,6 +266,7 @@ class PortwalletClient:
         self, request: JsonInput | PortwalletVerifyRequest
     ) -> VerifyPaymentResponse: ...
     def refund(self, request: JsonInput | PortwalletRefundRequest) -> RefundResponse: ...
+
 
 class AamarpayClient:
     def __init__(self, config: JsonInput | AamarpayConfig) -> None: ...
