@@ -1,16 +1,16 @@
 # Typed Python API Task Tracker
 
-- [ ] 0.1 Branch created
-- [ ] 0.2 DEV_SETUP.md added + build verified
-- [ ] 1.1 API_INVENTORY.md completed
-- [ ] 2.1 PYTHON_API_SPEC.md completed
-- [ ] 3.1 Pydantic models added (required)
-- [ ] 3.2 Payload mapping implemented
-- [ ] 4.1 Client façade implemented (model-only)
-- [ ] 5.1 Structured errors exposed
-- [ ] 6.1 py.typed included
-- [ ] 6.2 .pyi stubs added
-- [ ] 7.1 Packaging updated (Pydantic required)
-- [ ] 8.1 Model tests added
-- [ ] 8.2 Client façade tests added
-- [ ] 9.1 README updated with guidelines + examples
+- [x] 0.1 Branch created; commit: `0b1c0c6`; files changed: `(none)`; commands run: `git switch main && git pull --ff-only`, `git switch -c feat/python-typed-api`.
+- [x] 0.2 DEV_SETUP.md added + build verified; commit: `0b1c0c6` (doc), `3b7c393` (packaging/runtime wiring); files changed: `docs/DEV_SETUP.md`, `bd-payment-gateway-py/pyproject.toml`, `bd-payment-gateway-py/uv.lock`; commands run: `source $HOME/.local/bin/env && cd bd-payment-gateway-py && uv sync --group dev`, `uv run python -c "import bd_payment_gateway; import bd_payment_gateway.sslcommerz; print('ok')"`.
+- [x] 1.1 API_INVENTORY.md completed; commit: `0b1c0c6`, updated in `c495d6a`; files changed: `docs/API_INVENTORY.md`; commands run: `sed -n '1,520p' bd-payment-gateway-py/src/lib.rs`, `sed -n '1,260p' bd-payment-gateway-py/bd_payment_gateway_py.pyi`, `sed -n '1,260p' bd-payment-gateway-py/pyproject.toml`.
+- [x] 2.1 PYTHON_API_SPEC.md completed; commit: `0b1c0c6`, updated in `c495d6a`; files changed: `docs/PYTHON_API_SPEC.md`; commands run: `sed -n '1,680p' bd-payment-gateway-sslcommerz/src/lib.rs`, spec drafting/review commands.
+- [x] 3.1 Pydantic models added (required); commit: `3b7c393`; files changed: `bd-payment-gateway-py/python/bd_payment_gateway/sslcommerz/models.py`; commands run: `uv run pytest`, `uv run mypy python tests`.
+- [x] 3.2 Payload mapping implemented; commit: `3b7c393`; files changed: `bd-payment-gateway-py/python/bd_payment_gateway/sslcommerz/models.py`; commands run: `uv run pytest tests/test_sslcommerz_models.py` (via `uv run pytest`).
+- [x] 4.1 Client façade implemented (model-only); commit: `3b7c393`; files changed: `bd-payment-gateway-py/python/bd_payment_gateway/sslcommerz/client.py`, `bd-payment-gateway-py/python/bd_payment_gateway/sslcommerz/__init__.py`; commands run: `uv run pytest tests/test_sslcommerz_client.py` (via `uv run pytest`).
+- [x] 5.1 Structured errors exposed; commit: `3b7c393`; files changed: `bd-payment-gateway-py/src/lib.rs`, `bd-payment-gateway-py/python/bd_payment_gateway/errors.py`, `bd-payment-gateway-py/python/bd_payment_gateway/_bd_payment_gateway_py.pyi`; commands run: `cargo clippy -p bd-payment-gateway-py --all-features --all-targets -- -D warnings`, `uv run pytest`.
+- [x] 6.1 py.typed included; commit: `3b7c393`; files changed: `bd-payment-gateway-py/python/bd_payment_gateway/py.typed`; commands run: `uv sync --group dev`, `uv run mypy python tests`.
+- [x] 6.2 .pyi stubs added; commit: `3b7c393`; files changed: `bd-payment-gateway-py/python/bd_payment_gateway/_bd_payment_gateway_py.pyi`; commands run: `uv run mypy python tests`.
+- [x] 7.1 Packaging updated (Pydantic required); commit: `3b7c393`; files changed: `bd-payment-gateway-py/pyproject.toml`, `bd-payment-gateway-py/uv.lock`; commands run: `uv sync --group dev`, `uv run ruff check .`, `uv run mypy python tests`.
+- [x] 8.1 Model tests added; commit: `47e0689`; files changed: `bd-payment-gateway-py/tests/test_sslcommerz_models.py`; commands run: `uv run pytest`, `uv run mypy python tests`.
+- [x] 8.2 Client façade tests added; commit: `47e0689`; files changed: `bd-payment-gateway-py/tests/test_sslcommerz_client.py`; commands run: `uv run pytest`, `uv run mypy python tests`.
+- [x] 9.1 README updated with guidelines + examples; commit: `c495d6a`; files changed: `README.md`, `bd-payment-gateway-py/README.md`; commands run: `sed -n '1,320p' README.md`, documentation validation via `uv run python -c "import bd_payment_gateway; import bd_payment_gateway.sslcommerz; print('ok')"`.
