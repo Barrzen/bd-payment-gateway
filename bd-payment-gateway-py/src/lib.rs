@@ -15,7 +15,8 @@ use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyModule};
 use secrecy::SecretString;
 use serde::{Deserialize, de::DeserializeOwned};
-use serde_json::json;
+use std::time::Duration;
+use serde_json::{Value, json};
 use std::time::Duration;
 use tokio::runtime::Runtime;
 use url::Url;
@@ -24,7 +25,7 @@ static RUNTIME: Lazy<Runtime> =
     Lazy::new(|| Runtime::new().expect("tokio runtime should initialize for Python binding"));
 
 pyo3::create_exception!(
-    bd_payment_gateway_py,
+    _bd_payment_gateway_py,
     PaymentGatewayError,
     pyo3::exceptions::PyException
 );
@@ -171,12 +172,106 @@ fn parse_http_settings_raw(
 }
 
 fn to_py_err(err: BdPaymentError) -> PyErr {
-    let payload = json!({
-        "message": err.to_string(),
-        "code": err.code().as_str(),
-        "hint": err.hint(),
+    let (code, message, hint, provider_payload) = match &err {
+        BdPaymentError::ConfigError {
+            code,
+            message,
+            hint,
+        }
+        | BdPaymentError::ValidationError {
+            code,
+            message,
+            hint,
+        }
+        | BdPaymentError::Unsupported {
+            code,
+            message,
+            hint,
+        }
+        | BdPaymentError::ParseError {
+            code,
+            message,
+            hint,
+        } => (
+            code.as_str().to_owned(),
+            message.clone(),
+            hint.clone(),
+            None::<Value>,
+        ),
+        BdPaymentError::HttpError {
+            code,
+            message,
+            hint,
+            status,
+            request_id,
+            body,
+        } => (
+            code.as_str().to_owned(),
+            message.clone(),
+            hint.clone(),
+            Some(json!({
+                "status": status,
+                "request_id": request_id,
+                "body": body,
+            })),
+        ),
+        BdPaymentError::ProviderError {
+            code,
+            message,
+            hint,
+            provider_code,
+            request_id,
+        } => (
+            code.as_str().to_owned(),
+            message.clone(),
+            hint.clone(),
+            Some(json!({
+                "provider_code": provider_code,
+                "request_id": request_id,
+            })),
+        ),
+    };
+
+    let fallback_payload = json!({
+        "message": message,
+        "code": code,
+        "hint": hint,
+        "provider_payload": provider_payload,
     });
-    PaymentGatewayError::new_err(payload.to_string())
+
+    Python::try_attach(|py| {
+        let py_err = PaymentGatewayError::new_err(message.clone());
+        let err_value = py_err.value(py);
+
+        let _ = err_value.setattr("code", code.clone());
+        let _ = err_value.setattr("message", message.clone());
+        let _ = err_value.setattr("hint", hint.clone());
+
+        if let Some(payload) = provider_payload {
+            let json_mod = PyModule::import(py, "json");
+            let payload_value = json_mod
+                .and_then(|mod_json| mod_json.call_method1("loads", (payload.to_string(),)))
+                .map(|obj| obj.unbind());
+
+            match payload_value {
+                Ok(parsed_payload) => {
+                    let _ = err_value.setattr("provider_payload", parsed_payload);
+                }
+                Err(_) => {
+                    let _ = err_value.setattr("provider_payload", payload.to_string());
+                }
+            }
+        } else {
+            let _ = err_value.setattr("provider_payload", py.None());
+        }
+
+        if err_value.getattr("code").is_err() || err_value.getattr("hint").is_err() {
+            PaymentGatewayError::new_err(fallback_payload.to_string())
+        } else {
+            py_err
+        }
+    })
+    .unwrap_or_else(|| PaymentGatewayError::new_err(fallback_payload.to_string()))
 }
 
 fn map_initiate_response(
@@ -450,7 +545,7 @@ impl SslcommerzClient {
 }
 
 #[pymodule]
-fn bd_payment_gateway_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn _bd_payment_gateway_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add(
         "PaymentGatewayError",
