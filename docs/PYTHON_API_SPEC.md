@@ -15,7 +15,7 @@ bd_payment_gateway/
     py.typed
 ```
 
-Extension module remains `bd_payment_gateway_py` and is wrapped by the pure-Python facade.
+Extension module is internal (`bd_payment_gateway._bd_payment_gateway_py`) and is wrapped by the pure-Python facade.
 
 ## Public Imports
 
@@ -118,7 +118,7 @@ Facade wraps extension errors so users never parse strings manually.
 
 ## Extension Stubs
 
-`bd_payment_gateway_py.pyi` must declare:
+`bd_payment_gateway/_bd_payment_gateway_py.pyi` must declare:
 
 - provider clients
 - response classes

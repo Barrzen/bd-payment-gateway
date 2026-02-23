@@ -1,6 +1,6 @@
 # bd-payment-gateway-py
 
-PyO3 bindings for `bd-payment-gateway`.
+Python package + PyO3 extension for `bd-payment-gateway`.
 
 ## Python Support
 
@@ -31,33 +31,30 @@ source $HOME/.local/bin/env
 uv run maturin build --release --features portwallet
 ```
 
-## API
+## Typed API
 
-Provider-specific classes:
+Primary public API for SSLCOMMERZ:
 
-- `ShurjopayClient`
-- `PortwalletClient`
-- `AamarpayClient`
-- `SslcommerzClient`
+- `bd_payment_gateway.sslcommerz.SslcommerzClient`
+- `bd_payment_gateway.sslcommerz.models`
+  - `Settings`
+  - `Urls`
+  - `Customer`
+  - `Product`
+  - `InitiatePaymentRequest`
+  - `VerifyPaymentRequest`
 
-Constructors and methods accept either:
+The compiled extension is internal (`bd_payment_gateway._bd_payment_gateway_py`).
+Application code should use the facade and models, not raw dict payloads.
 
-- JSON string
-- Typed Python mapping/dict (recommended)
-
-Config payloads may include optional `http_settings`:
+Extension-level provider classes still support JSON/mapping configs and can accept optional
+`http_settings` keys:
 
 - `timeout_ms`
 - `max_retries`
 - `initial_backoff_ms`
 - `max_backoff_ms`
 - `user_agent`
-
-Methods:
-
-- `initiate_payment(request)`
-- `verify_payment(request)`
-- `refund(request)` where supported
 
 ## Smoke Test Example
 
@@ -80,13 +77,17 @@ Or create a local `examples/.env` file from `examples/.env.example`.
 
 ## Typing
 
-- Typed request/config contracts are provided in `bd_payment_gateway_py.pyi`.
-- `pydantic` is available in dev dependencies if you want stronger runtime validation in app code.
+- The package is typed (`py.typed` included).
+- Extension stubs are provided at `python/bd_payment_gateway/_bd_payment_gateway_py.pyi`.
+- Pydantic v2 + pydantic-settings are required runtime dependencies.
 
 ## Error Contract
 
-Errors raise `PaymentGatewayError` with JSON payload string including:
+Use `bd_payment_gateway.errors.PaymentGatewayError`.
 
-- `message`
+Structured fields:
+
 - `code`
+- `message`
 - `hint`
+- `provider_payload`

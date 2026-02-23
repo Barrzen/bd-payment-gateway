@@ -2,6 +2,8 @@
 
 Snapshot of the current Python surface before typed-first refactor.
 
+Captured from commit `0b1c0c6` to preserve pre-refactor baseline.
+
 ## Package and Import Paths
 
 - Distribution name: `bd-payment-gateway` (from `bd-payment-gateway-py/pyproject.toml`)
@@ -75,7 +77,7 @@ Current ergonomics require `json.loads(str(exc))` to read structured fields.
 ## Provider Modules and Source Locations
 
 - Python extension code: `bd-payment-gateway-py/src/lib.rs`
-- Existing extension stub: `bd-payment-gateway-py/bd_payment_gateway_py.pyi`
+- Existing extension stub at capture time: `bd-payment-gateway-py/bd_payment_gateway_py.pyi`
 - Provider Rust implementations:
   - `bd-payment-gateway-sslcommerz/src/lib.rs`
   - `bd-payment-gateway-portwallet/src/lib.rs`

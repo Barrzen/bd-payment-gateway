@@ -97,7 +97,94 @@ Base URLs are mapped per provider docs in each crate.
 - Crate: `bd-payment-gateway-py`
 - Built with PyO3 + maturin (abi3, minimum ABI 3.9; tested in CI on Python 3.14)
 - Local Python workflow uses `uv`
-- Typing stubs included; see `bd-payment-gateway-py/bd_payment_gateway_py.pyi`
+- Typed facade package: `bd_payment_gateway.sslcommerz`
+- Extension stub included at `bd_payment_gateway/_bd_payment_gateway_py.pyi`
+
+## Python Quickstart (Typed + Pydantic)
+
+Install:
+
+```bash
+pip install bd-payment-gateway
+```
+
+Configuration via env / `.env`:
+
+```dotenv
+BDPG_SSLCOMMERZ_STORE_ID=your_store_id
+BDPG_SSLCOMMERZ_STORE_PASSWD=your_store_password
+BDPG_SSLCOMMERZ_ENVIRONMENT=sandbox
+```
+
+Typed usage:
+
+```python
+from decimal import Decimal
+
+from bd_payment_gateway.errors import PaymentGatewayError
+from bd_payment_gateway.sslcommerz import SslcommerzClient
+from bd_payment_gateway.sslcommerz.models import (
+    Customer,
+    InitiatePaymentRequest,
+    Product,
+    Settings,
+    Urls,
+)
+
+settings = Settings()  # loads env + .env
+client = SslcommerzClient.from_settings(settings)
+
+request = InitiatePaymentRequest(
+    total_amount=Decimal("500.00"),
+    tran_id="TXN-20260223-0001",
+    urls=Urls(
+        success_url="https://merchant.example/success",
+        fail_url="https://merchant.example/fail",
+        cancel_url="https://merchant.example/cancel",
+        ipn_url="https://merchant.example/ipn",
+    ),
+    customer=Customer(
+        name="Demo User",
+        email="demo@example.com",
+        address_line_1="Dhaka",
+        city="Dhaka",
+        country="Bangladesh",
+        phone="01700000000",
+    ),
+    product=Product(
+        name="Course",
+        category="Education",
+        profile="general",
+    ),
+)
+
+init = client.initiate_payment(request)
+print(init.redirect_url)
+
+final_status = client.wait_for_final_status(init.provider_reference)
+print(final_status)
+```
+
+Structured error handling:
+
+```python
+try:
+    client.initiate_payment(request)
+except PaymentGatewayError as e:
+    print(e.code, e.message, e.hint, e.provider_payload)
+```
+
+Best practices:
+
+- Use `Decimal` for money (`float` is unsafe for payment amounts).
+- Keep `tran_id` unique and <= 30 characters.
+- Use Pydantic models only; avoid manual payload dict construction in app code.
+
+API references:
+
+- `docs/API_INVENTORY.md` (pre-refactor surface)
+- `docs/PYTHON_API_SPEC.md` (public API contract)
+- `docs/DEV_SETUP.md` (local setup/build/test commands)
 
 ## Development
 
