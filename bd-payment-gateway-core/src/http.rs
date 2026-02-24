@@ -119,6 +119,7 @@ impl HttpClient {
         );
 
         let redacted_headers = redact_headers(&headers);
+        let redacted_url = redact_url(url);
         let encoded_form = serde_urlencoded::to_string(form).map_err(|e| {
             BdPaymentError::validation(
                 format!("Failed to encode form body: {e}"),
@@ -138,7 +139,7 @@ impl HttpClient {
 
             self.log_request(&HttpLogRecord {
                 method: "POST".to_owned(),
-                url: url.to_string(),
+                url: redacted_url.clone(),
                 status: None,
                 attempt,
                 duration_ms: 0,
@@ -163,7 +164,7 @@ impl HttpClient {
 
                     let log = HttpLogRecord {
                         method: "POST".to_owned(),
-                        url: url.to_string(),
+                        url: redacted_url.clone(),
                         status: Some(status.as_u16()),
                         attempt,
                         duration_ms: started.elapsed().as_millis(),
@@ -185,7 +186,7 @@ impl HttpClient {
 
                     self.log_response(&log);
                     return Err(BdPaymentError::http(
-                        format!("HTTP {} calling {}", status.as_u16(), url),
+                        format!("HTTP {} calling {}", status.as_u16(), redacted_url),
                         "Verify API credentials, endpoint environment (sandbox/live), and payload fields.",
                         Some(status.as_u16()),
                         request_id,
@@ -195,7 +196,7 @@ impl HttpClient {
                 Err(err) => {
                     let log = HttpLogRecord {
                         method: "POST".to_owned(),
-                        url: url.to_string(),
+                        url: redacted_url.clone(),
                         status: None,
                         attempt,
                         duration_ms: started.elapsed().as_millis(),
@@ -209,7 +210,7 @@ impl HttpClient {
                         continue;
                     }
                     return Err(BdPaymentError::http(
-                        format!("Network call to {} failed: {err}", url),
+                        format!("Network call to {} failed: {err}", redacted_url),
                         "Check DNS, connectivity, TLS trust roots, and provider uptime.",
                         None,
                         None,
@@ -236,6 +237,7 @@ impl HttpClient {
 
         let redacted_body = serialized_body.as_ref().map(redact_json);
         let redacted_headers = redact_headers(&headers);
+        let redacted_url = redact_url(url);
 
         let mut attempt = 0;
         loop {
@@ -253,7 +255,7 @@ impl HttpClient {
 
             self.log_request(&HttpLogRecord {
                 method: method.to_string(),
-                url: url.to_string(),
+                url: redacted_url.clone(),
                 status: None,
                 attempt,
                 duration_ms: 0,
@@ -278,7 +280,7 @@ impl HttpClient {
 
                     let log = HttpLogRecord {
                         method: method.to_string(),
-                        url: url.to_string(),
+                        url: redacted_url.clone(),
                         status: Some(status.as_u16()),
                         attempt,
                         duration_ms: started.elapsed().as_millis(),
@@ -300,7 +302,7 @@ impl HttpClient {
 
                     self.log_response(&log);
                     return Err(BdPaymentError::http(
-                        format!("HTTP {} calling {}", status.as_u16(), url),
+                        format!("HTTP {} calling {}", status.as_u16(), redacted_url),
                         "Verify API credentials, endpoint environment (sandbox/live), and payload fields.",
                         Some(status.as_u16()),
                         request_id,
@@ -310,7 +312,7 @@ impl HttpClient {
                 Err(err) => {
                     let log = HttpLogRecord {
                         method: method.to_string(),
-                        url: url.to_string(),
+                        url: redacted_url.clone(),
                         status: None,
                         attempt,
                         duration_ms: started.elapsed().as_millis(),
@@ -324,7 +326,7 @@ impl HttpClient {
                         continue;
                     }
                     return Err(BdPaymentError::http(
-                        format!("Network call to {} failed: {err}", url),
+                        format!("Network call to {} failed: {err}", redacted_url),
                         "Check DNS, connectivity, TLS trust roots, and provider uptime.",
                         None,
                         None,
@@ -471,6 +473,36 @@ fn redact_headers(headers: &HeaderMap) -> BTreeMap<String, String> {
         .collect()
 }
 
+fn redact_url(url: &url::Url) -> String {
+    let mut redacted = url.clone();
+    if redacted.query().is_none() {
+        return redacted.to_string();
+    }
+
+    let pairs: Vec<(String, String)> = redacted
+        .query_pairs()
+        .map(|(k, v)| {
+            let key = k.into_owned();
+            let value = if is_sensitive_key(&key) {
+                REDACTED.to_owned()
+            } else {
+                v.into_owned()
+            };
+            (key, value)
+        })
+        .collect();
+
+    {
+        let mut query_pairs = redacted.query_pairs_mut();
+        query_pairs.clear();
+        for (key, value) in pairs {
+            query_pairs.append_pair(&key, &value);
+        }
+    }
+
+    redacted.to_string()
+}
+
 pub fn redact_json(value: &Value) -> Value {
     match value {
         Value::Object(map) => Value::Object(
@@ -495,6 +527,7 @@ fn is_sensitive_key(key: &str) -> bool {
         "token",
         "secret",
         "password",
+        "passwd",
         "authorization",
         "key",
         "store_id",
@@ -514,9 +547,12 @@ fn truncate(s: &str, max_chars: usize) -> String {
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
+    use std::collections::BTreeMap;
 
-    use super::redact_json;
+    use serde_json::json;
+    use url::Url;
+
+    use super::{redact_json, redact_url};
 
     #[test]
     fn redacts_sensitive_json_fields() {
@@ -529,5 +565,25 @@ mod tests {
         assert_eq!(redacted["api_key"], "[REDACTED]");
         assert_eq!(redacted["nested"]["token"], "[REDACTED]");
         assert_eq!(redacted["nested"]["visible"], "ok");
+    }
+
+    #[test]
+    fn redacts_sensitive_query_params_in_url() {
+        let url = Url::parse(
+            "https://example.com/verify?store_id=merchant&store_passwd=topsecret&tran_id=tx-1",
+        )
+        .expect("valid url");
+        let redacted = Url::parse(&redact_url(&url)).expect("redacted url remains valid");
+        let query: BTreeMap<_, _> = redacted.query_pairs().into_owned().collect();
+
+        assert_eq!(
+            query.get("store_id").map(String::as_str),
+            Some("[REDACTED]")
+        );
+        assert_eq!(
+            query.get("store_passwd").map(String::as_str),
+            Some("[REDACTED]")
+        );
+        assert_eq!(query.get("tran_id").map(String::as_str), Some("tx-1"));
     }
 }

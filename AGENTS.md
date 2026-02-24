@@ -97,24 +97,28 @@ Bindings:
 1. Create crate: `bd-payment-gateway-<provider>`.
 2. Add it to workspace `Cargo.toml` members.
 3. Implement `Config` + `Client` with:
-  - `environment: Environment`
-  - `http_settings: HttpSettings`
-  - input `validate()` methods
+    - `environment: Environment`
+    - `http_settings: HttpSettings`
+    - input `validate()` methods
+
 4. Implement `PaymentProvider` trait:
-  - `initiate_payment`
-  - `verify_payment`
-  - `refund` (or return `Unsupported` with clear hint)
+    - `initiate_payment`
+    - `verify_payment`
+    - `refund` (or return `Unsupported` with clear hint)
+
 5. Use core `HttpClient` (timeouts/retries/redaction already enforced).
 6. Map provider error payloads into `BdPaymentError::ProviderError`.
 7. Add unit tests:
-  - request validation
-  - auth/signature logic (if applicable)
-  - parsing/error mapping via mock responses
+    - request validation
+    - auth/signature logic (if applicable)
+    - parsing/error mapping via mock responses
+
 8. Add facade feature in `bd-payment-gateway/Cargo.toml`.
 9. Re-export in `bd-payment-gateway/src/lib.rs` behind feature gate.
 10. Add binding support:
-  - JS class + constructor in `bd-payment-gateway-js`
-  - Python class in `bd-payment-gateway-py`
+    - JS class + constructor in `bd-payment-gateway-js`
+    - Python class in `bd-payment-gateway-py`
+
 11. Add README example for provider crate.
 12. Update root README supported providers table.
 13. Run fmt/clippy/test before opening PR.
@@ -134,3 +138,15 @@ Bindings:
   - changing request/response field names/types is breaking
   - renaming/removing error codes is breaking
   - changing default security behavior must be documented and versioned carefully
+
+  ## Working Start Rule
+
+  Before starting work:
+
+  1. Update main branch: `git switch main && git pull`.
+  2. Create a new feature or fix branch from upto date main branch.
+  3. Commit using [Conventional Commits](https://www.conventionalcommits.org/):
+      - Format: `<type>(<scope>): <subject>`
+      - Examples: `feat(portwallet): add retry logic`, `fix(core): handle timeout errors`
+      - Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
+  4. **Do not push to origin until explicitly instructed**

@@ -7,6 +7,10 @@ name = "bd-payment-gateway"
 version = "0.1.0"
 description = "Python bindings for Bangladesh payment gateway SDK"
 requires-python = ">=3.9"
+dependencies = [
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+]
 classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
@@ -17,10 +21,23 @@ classifiers = [
 [dependency-groups]
 dev = [
   "maturin>=1.8,<2",
+  "mypy>=1.16",
+  "pytest>=8.4",
+  "ruff>=0.12",
   "typing-extensions>=4.12",
-  "pydantic>=2.7",
 ]
 
 [tool.maturin]
 features = ["all-providers"]
-module-name = "bd_payment_gateway_py"
+module-name = "bd_payment_gateway._bd_payment_gateway_py"
+python-source = "python"
+
+[tool.pytest.ini_options]
+pythonpath = ["python"]
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.14"
+mypy_path = ["python"]
+warn_unused_ignores = true
+exclude = ["^target/"]
