@@ -6,7 +6,10 @@ build-backend = "maturin"
 name = "bd-payment-gateway"
 version = "0.1.0"
 description = "Python bindings for Bangladesh payment gateway SDK"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
 requires-python = ">=3.9"
+keywords = ["bangladesh", "payments", "gateway", "sdk", "pyo3"]
 dependencies = [
   "pydantic>=2.7",
   "pydantic-settings>=2.3",
@@ -15,7 +18,17 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Rust",
+  "License :: OSI Approved :: MIT License",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
 ]
 
 [dependency-groups]
@@ -31,6 +44,7 @@ dev = [
 features = ["all-providers"]
 module-name = "bd_payment_gateway._bd_payment_gateway_py"
 python-source = "python"
+compatibility = "pypi"
 
 [tool.pytest.ini_options]
 pythonpath = ["python"]
