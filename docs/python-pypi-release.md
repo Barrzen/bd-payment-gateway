@@ -31,20 +31,18 @@ PyPI first with the same values above, then run the first release workflow.
 3. Click `Run workflow`.
 4. Fill workflow inputs:
    - `version`: package version (e.g. `0.1.1`), creating tag `py-v0.1.1`
-   - `changelog`: markdown release notes body
-   - `release_name`: optional (defaults to `Python v<version>`)
-   - `target_commitish`: branch to release from (default `main`)
    - `prerelease`: mark release as pre-release
 5. Run workflow.
 6. Workflow behavior:
    - Dispatch run updates both version files to the input version.
-   - It commits and pushes the version bump to `target_commitish`.
-   - It creates a GitHub release with your changelog.
+   - It commits and pushes the version bump to `main`.
+   - It generates changelog from commit messages since last `py-v*` tag.
+   - It creates a GitHub release with that generated changelog.
    - Release-published event runs wheel/sdist builds.
    - Publish job uploads to PyPI via Trusted Publishing.
 
-Note: If the target branch is protected from direct pushes, either allow this
-workflow to push, or release from an unprotected release branch.
+Note: If `main` is protected from direct pushes, allow this workflow/bot to
+push to `main`, or switch this workflow to release from a dedicated branch.
 
 ## 4) Do I need a PyPI token?
 

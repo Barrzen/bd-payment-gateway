@@ -9,20 +9,6 @@ on:
         description: "Python package version (SemVer), e.g. 0.1.1"
         required: true
         type: string
-      changelog:
-        description: "Release notes/changelog in Markdown"
-        required: true
-        type: string
-      release_name:
-        description: "Optional GitHub release title"
-        required: false
-        default: ""
-        type: string
-      target_commitish:
-        description: "Branch to bump and release from"
-        required: false
-        default: "main"
-        type: string
       prerelease:
         description: "Mark as pre-release"
         required: false
@@ -40,17 +26,12 @@ jobs:
       - name: Validate workflow inputs
         env:
           VERSION: ${{ inputs.version }}
-          CHANGELOG: ${{ inputs.changelog }}
         run: |
           set -euo pipefail
           if ! printf '%s' "$VERSION" | \
             grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-.+][0-9A-Za-z.-]+)?$'; then
             echo "Invalid version '${VERSION}'." >&2
             echo "Use SemVer like 0.1.1 or 0.2.0-rc.1" >&2
-            exit 1
-          fi
-          if ! printf '%s' "$CHANGELOG" | grep -q '[^[:space:]]'; then
-            echo "changelog input is required" >&2
             exit 1
           fi
 
@@ -76,18 +57,8 @@ jobs:
       - name: Checkout target branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.target_commitish }}
-
-      - name: Ensure target is a branch
-        id: target
-        run: |
-          set -euo pipefail
-          branch="$(git rev-parse --abbrev-ref HEAD)"
-          if [ "$branch" = "HEAD" ]; then
-            echo "target_commitish must be a branch, not a detached commit." >&2
-            exit 1
-          fi
-          echo "branch=${branch}" >> "$GITHUB_OUTPUT"
+          ref: main
+          fetch-depth: 0
 
       - name: Bump Python package versions
         env:
@@ -100,7 +71,6 @@ jobs:
             bd-payment-gateway-py/Cargo.toml
 
       - name: Commit and push version bump
-        id: bump_commit
         env:
           VERSION: ${{ inputs.version }}
         run: |
@@ -115,66 +85,64 @@ jobs:
             echo "No version changes to commit."
           else
             git commit -m "chore(py): bump python package version to ${VERSION}"
-            git push origin "HEAD:${{ steps.target.outputs.branch }}"
+            git push origin HEAD:main
           fi
 
-      - name: Create release from workflow inputs
-        id: create
+      - name: Generate changelog from commit messages
+        id: changelog
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          prev_tag="$(
+            git tag --list 'py-v*' --sort=-v:refname | head -n 1 || true
+          )"
+
+          if [ -n "$prev_tag" ]; then
+            notes="$(git log --no-merges \
+              --pretty=format:'- %s (%h)' \
+              "${prev_tag}..HEAD")"
+          else
+            notes="$(git log --no-merges \
+              --pretty=format:'- %s (%h)' \
+              -n 100)"
+          fi
+
+          if [ -z "$notes" ]; then
+            notes="- chore(py): release v${VERSION}"
+          fi
+
+          {
+            echo "body<<EOF"
+            echo "## Changelog"
+            echo
+            echo "$notes"
+            echo
+            if [ -n "$prev_tag" ]; then
+              echo "_Range: ${prev_tag}..py-v${VERSION}_"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create release
         uses: actions/github-script@v7
         env:
           VERSION: ${{ inputs.version }}
-          CHANGELOG: ${{ inputs.changelog }}
-          RELEASE_NAME: ${{ inputs.release_name }}
-          TARGET_COMMITISH: ${{ steps.target.outputs.branch }}
           PRERELEASE: ${{ inputs.prerelease }}
+          CHANGELOG_BODY: ${{ steps.changelog.outputs.body }}
         with:
           script: |
             const version = (process.env.VERSION || "").trim();
-            const changelog = (process.env.CHANGELOG || "").trim();
-            const releaseNameInput = (process.env.RELEASE_NAME || "").trim();
-            const targetCommitish = (
-              process.env.TARGET_COMMITISH || "main"
-            ).trim();
             const prerelease = (process.env.PRERELEASE || "false") === "true";
-            const semver =
-              /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
-
-            if (!semver.test(version)) {
-              const msg = [
-                `Invalid version '${version}'.`,
-                "Use SemVer like 0.1.1 or 0.2.0-rc.1",
-              ].join(" ");
-              core.setFailed(msg);
-              return;
-            }
-            if (!changelog) {
-              core.setFailed("changelog input is required");
-              return;
-            }
-
+            const changelog = process.env.CHANGELOG_BODY || "";
             const tagName = `py-v${version}`;
-            const releaseName = releaseNameInput || `Python v${version}`;
-
-            try {
-              await github.rest.repos.getReleaseByTag({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag: tagName,
-              });
-              core.setFailed(
-                `Release tag '${tagName}' already exists`
-              );
-              return;
-            } catch (err) {
-              if (err.status !== 404) throw err;
-            }
 
             const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tagName,
-              target_commitish: targetCommitish,
-              name: releaseName,
+              target_commitish: "main",
+              name: `Python v${version}`,
               body: changelog,
               prerelease,
               draft: false,
