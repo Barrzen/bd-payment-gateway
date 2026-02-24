@@ -31,6 +31,7 @@ PyPI first with the same values above, then run the first release workflow.
 3. Click `Run workflow`.
 4. Fill workflow inputs:
    - `version`: package version (e.g. `0.1.1`), creating tag `py-v0.1.1`
+   - `version` must be greater than the current package version in repository
    - `prerelease`: mark release as pre-release
 5. Run workflow.
 6. Workflow behavior:
@@ -38,7 +39,7 @@ PyPI first with the same values above, then run the first release workflow.
    - It commits and pushes the version bump to `main`.
    - It generates changelog from commit messages since last `py-v*` tag.
    - It creates a GitHub release with that generated changelog.
-   - Release-published event runs wheel/sdist builds.
+   - In the same workflow run, wheel/sdist builds run and publish to PyPI.
    - Publish job uploads to PyPI via Trusted Publishing.
 
 Note: If `main` is protected from direct pushes, allow this workflow/bot to
