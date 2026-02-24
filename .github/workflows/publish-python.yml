@@ -229,7 +229,7 @@ jobs:
             manylinux: "2014"
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            manylinux: "2014"
+            manylinux: "2_28"
           - os: macos-13
             target: x86_64-apple-darwin
             manylinux: "off"
@@ -282,7 +282,6 @@ jobs:
           command: sdist
           args: >-
             --manifest-path bd-payment-gateway-py/Cargo.toml
-            --features all-providers
             --out dist
 
       - name: Upload sdist artifact
