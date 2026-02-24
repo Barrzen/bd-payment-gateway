@@ -1,0 +1,274 @@
+name: Publish Python Package
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Python package version (SemVer), e.g. 0.1.1"
+        required: true
+        type: string
+      changelog:
+        description: "Release notes/changelog in Markdown"
+        required: true
+        type: string
+      release_name:
+        description: "Optional GitHub release title"
+        required: false
+        default: ""
+        type: string
+      target_commitish:
+        description: "Branch to bump and release from"
+        required: false
+        default: "main"
+        type: string
+      prerelease:
+        description: "Mark as pre-release"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Validate workflow inputs
+        env:
+          VERSION: ${{ inputs.version }}
+          CHANGELOG: ${{ inputs.changelog }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$VERSION" | \
+            grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-.+][0-9A-Za-z.-]+)?$'; then
+            echo "Invalid version '${VERSION}'." >&2
+            echo "Use SemVer like 0.1.1 or 0.2.0-rc.1" >&2
+            exit 1
+          fi
+          if ! printf '%s' "$CHANGELOG" | grep -q '[^[:space:]]'; then
+            echo "changelog input is required" >&2
+            exit 1
+          fi
+
+      - name: Ensure release tag does not exist
+        uses: actions/github-script@v7
+        env:
+          VERSION: ${{ inputs.version }}
+        with:
+          script: |
+            const version = (process.env.VERSION || "").trim();
+            const tagName = `py-v${version}`;
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tagName,
+              });
+              core.setFailed(`Release tag '${tagName}' already exists`);
+            } catch (err) {
+              if (err.status !== 404) throw err;
+            }
+
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target_commitish }}
+
+      - name: Ensure target is a branch
+        id: target
+        run: |
+          set -euo pipefail
+          branch="$(git rev-parse --abbrev-ref HEAD)"
+          if [ "$branch" = "HEAD" ]; then
+            echo "target_commitish must be a branch, not a detached commit." >&2
+            exit 1
+          fi
+          echo "branch=${branch}" >> "$GITHUB_OUTPUT"
+
+      - name: Bump Python package versions
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          perl -0pi -e 's/(^version = ")[^"]+(")/$1$ENV{VERSION}$2/m' \
+            bd-payment-gateway-py/pyproject.toml
+          perl -0pi -e 's/(^version = ")[^"]+(")/$1$ENV{VERSION}$2/m' \
+            bd-payment-gateway-py/Cargo.toml
+
+      - name: Commit and push version bump
+        id: bump_commit
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            bd-payment-gateway-py/pyproject.toml \
+            bd-payment-gateway-py/Cargo.toml
+          if git diff --cached --quiet; then
+            echo "No version changes to commit."
+          else
+            git commit -m "chore(py): bump python package version to ${VERSION}"
+            git push origin "HEAD:${{ steps.target.outputs.branch }}"
+          fi
+
+      - name: Create release from workflow inputs
+        id: create
+        uses: actions/github-script@v7
+        env:
+          VERSION: ${{ inputs.version }}
+          CHANGELOG: ${{ inputs.changelog }}
+          RELEASE_NAME: ${{ inputs.release_name }}
+          TARGET_COMMITISH: ${{ steps.target.outputs.branch }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        with:
+          script: |
+            const version = (process.env.VERSION || "").trim();
+            const changelog = (process.env.CHANGELOG || "").trim();
+            const releaseNameInput = (process.env.RELEASE_NAME || "").trim();
+            const targetCommitish = (
+              process.env.TARGET_COMMITISH || "main"
+            ).trim();
+            const prerelease = (process.env.PRERELEASE || "false") === "true";
+            const semver =
+              /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+
+            if (!semver.test(version)) {
+              const msg = [
+                `Invalid version '${version}'.`,
+                "Use SemVer like 0.1.1 or 0.2.0-rc.1",
+              ].join(" ");
+              core.setFailed(msg);
+              return;
+            }
+            if (!changelog) {
+              core.setFailed("changelog input is required");
+              return;
+            }
+
+            const tagName = `py-v${version}`;
+            const releaseName = releaseNameInput || `Python v${version}`;
+
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tagName,
+              });
+              core.setFailed(
+                `Release tag '${tagName}' already exists`
+              );
+              return;
+            } catch (err) {
+              if (err.status !== 404) throw err;
+            }
+
+            const release = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tagName,
+              target_commitish: targetCommitish,
+              name: releaseName,
+              body: changelog,
+              prerelease,
+              draft: false,
+              generate_release_notes: false,
+            });
+
+            core.notice(`Created release: ${release.data.html_url}`);
+
+  build-wheels:
+    name: Build wheel (${{ matrix.target }})
+    if: github.event_name == 'release'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            manylinux: "2014"
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            manylinux: "2014"
+          - os: macos-13
+            target: x86_64-apple-darwin
+            manylinux: "off"
+          - os: macos-14
+            target: aarch64-apple-darwin
+            manylinux: "off"
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            manylinux: "off"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          rust-toolchain: 1.93.0
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          args: >-
+            --release
+            --manifest-path bd-payment-gateway-py/Cargo.toml
+            --features all-providers
+            --compatibility pypi
+            --out dist
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: python-dist-${{ matrix.target }}
+          path: dist
+
+  build-sdist:
+    name: Build sdist
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build source distribution
+        uses: PyO3/maturin-action@v1
+        with:
+          rust-toolchain: 1.93.0
+          command: sdist
+          args: >-
+            --manifest-path bd-payment-gateway-py/Cargo.toml
+            --features all-providers
+            --out dist
+
+      - name: Upload sdist artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: python-dist-sdist
+          path: dist
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [build-wheels, build-sdist]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+    permissions:
+      id-token: write
+    environment:
+      name: pypi
+      url: https://pypi.org/p/bd-payment-gateway
+    steps:
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@v6
+        with:
+          pattern: python-dist-*
+          merge-multiple: true
+          path: dist
+
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

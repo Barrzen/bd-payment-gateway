@@ -6,6 +6,16 @@ Python package + PyO3 extension for `bd-payment-gateway`.
 
 - Python 3.9+ supported (built with `abi3`, minimum ABI 3.9; tested on 3.14 in CI)
 
+## Install (PyPI)
+
+```bash
+pip install bd-payment-gateway
+```
+
+```bash
+uv add bd-payment-gateway
+```
+
 ## Local Tooling
 
 Use `uv` locally for Python dependency and command execution.
