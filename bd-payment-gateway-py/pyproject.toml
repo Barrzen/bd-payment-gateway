@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "bd-payment-gateway"
-version = "0.1.4"
+version = "0.1.5"
 description = "High-performance, Rust-powered, security-focused Bangladesh payment gateway library for Python"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
