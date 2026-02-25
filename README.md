@@ -1,20 +1,17 @@
 # bd-payment-gateway
 
-Python and Rust toolkit for Bangladesh payment gateways.
+High-performance Bangladesh payment gateway SDK, powered by Rust.
 
-This README is the user guide for the Python package on PyPI: `bd-payment-gateway`.
-If you are integrating payments in a Python app, start here.
+This repository provides a multi-language SDK family:
 
-## Overview
+- Python: [`bd-payment-gateway`](https://pypi.org/project/bd-payment-gateway/)
+- JavaScript/TypeScript: [`bd-payment-gateway-js`](bd-payment-gateway-js/README.md)
+- Rust: [`bd-payment-gateway`](bd-payment-gateway/README.md) facade + provider crates
 
-`bd-payment-gateway` helps you:
+## Python Home
 
-- create a payment session
-- redirect the customer to a hosted payment page
-- receive callback/IPN events
-- verify final payment status safely
-
-It is designed for backend services where you need clear errors and typed request models.
+The Python package `bd-payment-gateway` is security-focused and designed for
+production payment workloads with typed models and actionable errors.
 
 ## Supported Providers (Python)
 
@@ -25,13 +22,28 @@ It is designed for backend services where you need clear errors and typed reques
 
 Only SSLCOMMERZ is supported right now in Python.
 
-## Install
+## Install (Python)
+
+Use the copy button on each command block when your docs viewer supports it.
 
 ```bash
 pip install bd-payment-gateway
 ```
 
-## Configuration
+```bash
+uv add bd-payment-gateway
+```
+
+```bash
+uv pip install bd-payment-gateway
+```
+
+## Provider Docs (Python)
+
+<details open>
+<summary><strong>SSLCOMMERZ (default)</strong></summary>
+
+### Configuration
 
 Use these environment variables (shell or `.env`):
 
@@ -50,10 +62,12 @@ BDPG_SSLCOMMERZ_STORE_PASSWD=your_store_password
 BDPG_SSLCOMMERZ_ENVIRONMENT=sandbox
 ```
 
-## Quickstart (SSLCOMMERZ)
+### Quickstart (FastAPI)
 
 ```python
 from decimal import Decimal
+
+from fastapi import FastAPI, Request
 
 from bd_payment_gateway.errors import PaymentGatewayError
 from bd_payment_gateway.sslcommerz import SslcommerzClient
@@ -66,73 +80,102 @@ from bd_payment_gateway.sslcommerz.models import (
     VerifyPaymentRequest,
 )
 
+app = FastAPI()
 settings = Settings()  # Reads BDPG_SSLCOMMERZ_* from env/.env
 client = SslcommerzClient.from_settings(settings)
 
-try:
-    initiate = client.initiate_payment(
-        InitiatePaymentRequest(
-            total_amount=Decimal("500.00"),
-            tran_id="TXN-10001",
-            urls=Urls(
-                success_url="https://merchant.example/payment/success",
-                fail_url="https://merchant.example/payment/fail",
-                cancel_url="https://merchant.example/payment/cancel",
-                ipn_url="https://merchant.example/payment/ipn",
-            ),
-            customer=Customer(
-                name="Demo User",
-                email="demo@example.com",
-                address_line_1="Dhaka",
-                city="Dhaka",
-                country="Bangladesh",
-                phone="01700000000",
-            ),
-            product=Product(
-                name="Python Course",
-                category="Education",
-                profile="general",
-            ),
+@app.post("/pay")
+def pay() -> dict:
+    try:
+        initiate = client.initiate_payment(
+            InitiatePaymentRequest(
+                total_amount=Decimal("500.00"),
+                tran_id="TXN-10001",
+                urls=Urls(
+                    success_url="https://merchant.example/payment/success",
+                    fail_url="https://merchant.example/payment/fail",
+                    cancel_url="https://merchant.example/payment/cancel",
+                    ipn_url="https://merchant.example/payment/ipn",
+                ),
+                customer=Customer(
+                    name="Demo User",
+                    email="demo@example.com",
+                    address_line_1="Dhaka",
+                    city="Dhaka",
+                    country="Bangladesh",
+                    phone="01700000000",
+                ),
+                product=Product(
+                    name="Python Course",
+                    category="Education",
+                    profile="general",
+                ),
+            )
         )
-    )
-except PaymentGatewayError as err:
-    print(err.code, err.message, err.hint)
-    raise
+    except PaymentGatewayError as err:
+        return {"error": err.message, "code": err.code, "hint": err.hint}
 
-print("Send customer here:", initiate.redirect_url)
+    return {"redirect_url": str(initiate.redirect_url)}
 
-# Later, in your callback handler, verify using session_key/sessionkey
-verified = client.verify_payment(
-    VerifyPaymentRequest(session_key=initiate.provider_reference)
-)
-print("Final status:", verified.status)
+@app.get("/payment/success")
+def payment_success(request: Request) -> dict:
+    session_key = request.query_params.get("sessionkey", "")
+    if not session_key:
+        return {"error": "Missing sessionkey in callback"}
+
+    try:
+        verified = client.verify_payment(VerifyPaymentRequest(session_key=session_key))
+    except PaymentGatewayError as err:
+        return {"error": err.message, "code": err.code, "hint": err.hint}
+
+    return {"status": verified.status}
 ```
 
-## How the payment flow works
-
-1. `initiate_payment`: Your backend creates a session.
-2. `redirect_url`: You redirect the customer to SSLCOMMERZ hosted checkout.
-3. Callback and IPN:
-   - Callback: browser return to your `success_url`, `fail_url`, or `cancel_url`.
-   - IPN: server-to-server notification from SSLCOMMERZ to your `ipn_url`.
-4. `verify_payment`: Your backend confirms final status before marking order as paid.
-
-## Error handling example
+### Alternative without environment variables
 
 ```python
-from bd_payment_gateway.errors import PaymentGatewayError
+from bd_payment_gateway.sslcommerz import SslcommerzClient
+from bd_payment_gateway.sslcommerz.models import Settings
 
-try:
-    verified = client.verify_payment(
-        VerifyPaymentRequest(session_key="received-from-callback")
-    )
-except PaymentGatewayError as err:
-    # Structured error fields are safe to read directly.
-    print("code=", err.code)
-    print("message=", err.message)
-    print("hint=", err.hint)
-    print("provider_payload=", err.provider_payload)
+settings = Settings(
+    store_id="your_store_id",
+    store_passwd="your_store_password",
+    environment="sandbox",
+)
+client = SslcommerzClient.from_settings(settings)
 ```
+
+</details>
+
+<details>
+<summary><strong>PortWallet (Python: coming soon)</strong></summary>
+
+Python bindings are not published yet.
+
+- Rust crate docs: <https://github.com/Barrzen/bd-payment-gateway/tree/main/bd-payment-gateway-portwallet>
+- JavaScript package docs: <https://github.com/Barrzen/bd-payment-gateway/tree/main/bd-payment-gateway-js>
+
+</details>
+
+<details>
+<summary><strong>shurjoPay (Python: coming soon)</strong></summary>
+
+Python bindings are not published yet.
+
+- Rust crate docs: <https://github.com/Barrzen/bd-payment-gateway/tree/main/bd-payment-gateway-shurjopay>
+- JavaScript package docs: <https://github.com/Barrzen/bd-payment-gateway/tree/main/bd-payment-gateway-js>
+
+</details>
+
+<details>
+<summary><strong>aamarPay (Python: coming soon)</strong></summary>
+
+Python bindings are not published yet.
+
+- Rust crate docs: <https://github.com/Barrzen/bd-payment-gateway/tree/main/bd-payment-gateway-aamarpay>
+- JavaScript package docs: <https://github.com/Barrzen/bd-payment-gateway/tree/main/bd-payment-gateway-js>
+
+</details>
 
 ## Docs
 
@@ -143,14 +186,12 @@ except PaymentGatewayError as err:
 
 ## Contributing and local build
 
-Build-from-source and contributor tooling are intentionally separated from usage docs.
-
 - Contributor setup: [`docs/DEV_SETUP.md`](docs/DEV_SETUP.md)
 - Contribution guide: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
-## Links
+## Feedback and Issues
 
-- Repository: <https://github.com/Barrzen/bd-payment-gateway>
-- Project home page: <https://github.com/Barrzen/bd-payment-gateway#readme>
-- Documentation: <https://github.com/Barrzen/bd-payment-gateway/tree/main/docs>
+Have a suggestion, integration request, or bug report? Open an issue:
+
 - Issues: <https://github.com/Barrzen/bd-payment-gateway/issues>
+- New issue form: <https://github.com/Barrzen/bd-payment-gateway/issues/new/choose>

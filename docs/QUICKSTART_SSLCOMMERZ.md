@@ -6,8 +6,18 @@ Only SSLCOMMERZ is supported right now in Python.
 
 ## 1) Install
 
+Use the copy button on each command block when your docs viewer supports it.
+
 ```bash
 pip install bd-payment-gateway
+```
+
+```bash
+uv add bd-payment-gateway
+```
+
+```bash
+uv pip install bd-payment-gateway
 ```
 
 ## 2) Configure environment variables
@@ -18,12 +28,12 @@ BDPG_SSLCOMMERZ_STORE_PASSWD=your_store_password
 BDPG_SSLCOMMERZ_ENVIRONMENT=sandbox
 ```
 
-## 3) Create payment, redirect user, and verify
+## 3) Create payment, redirect user, and verify (FastAPI)
 
 ```python
 from decimal import Decimal
 
-from flask import Flask, request
+from fastapi import FastAPI, Request
 
 from bd_payment_gateway.errors import PaymentGatewayError
 from bd_payment_gateway.sslcommerz import SslcommerzClient
@@ -36,13 +46,13 @@ from bd_payment_gateway.sslcommerz.models import (
     VerifyPaymentRequest,
 )
 
-app = Flask(__name__)
+app = FastAPI()
 settings = Settings()
 client = SslcommerzClient.from_settings(settings)
 
 
 @app.post("/checkout")
-def checkout() -> tuple[dict, int]:
+def checkout() -> dict:
     try:
         initiated = client.initiate_payment(
             InitiatePaymentRequest(
@@ -70,43 +80,57 @@ def checkout() -> tuple[dict, int]:
             )
         )
     except PaymentGatewayError as err:
-        return {"error": err.message, "code": err.code, "hint": err.hint}, 400
+        return {"error": err.message, "code": err.code, "hint": err.hint}
 
     # Return this URL to frontend, then redirect the customer there.
-    return {"redirect_url": str(initiated.redirect_url)}, 200
+    return {"redirect_url": str(initiated.redirect_url)}
 
 
 @app.get("/payment/success")
-def payment_success() -> tuple[dict, int]:
-    session_key = request.args.get("sessionkey", "")
+def payment_success(request: Request) -> dict:
+    session_key = request.query_params.get("sessionkey", "")
     if not session_key:
-        return {"error": "Missing sessionkey"}, 400
+        return {"error": "Missing sessionkey"}
 
     try:
         verified = client.verify_payment(
             VerifyPaymentRequest(session_key=session_key)
         )
     except PaymentGatewayError as err:
-        return {"error": err.message, "code": err.code, "hint": err.hint}, 400
+        return {"error": err.message, "code": err.code, "hint": err.hint}
 
     # Mark your order paid only after successful verify status.
-    return {"status": verified.status}, 200
+    return {"status": verified.status}
 
 
 @app.get("/payment/fail")
-def payment_fail() -> tuple[dict, int]:
-    return {"status": "failed"}, 200
+def payment_fail() -> dict:
+    return {"status": "failed"}
 
 
 @app.get("/payment/cancel")
-def payment_cancel() -> tuple[dict, int]:
-    return {"status": "cancelled"}, 200
+def payment_cancel() -> dict:
+    return {"status": "cancelled"}
 
 
 @app.post("/payment/ipn")
-def payment_ipn() -> tuple[dict, int]:
+def payment_ipn() -> dict:
     # IPN means Instant Payment Notification from SSLCOMMERZ server.
-    return {"received": True}, 200
+    return {"received": True}
+```
+
+Alternative without env configuration:
+
+```python
+from bd_payment_gateway.sslcommerz import SslcommerzClient
+from bd_payment_gateway.sslcommerz.models import Settings
+
+settings = Settings(
+    store_id="your_store_id",
+    store_passwd="your_store_password",
+    environment="sandbox",
+)
+client = SslcommerzClient.from_settings(settings)
 ```
 
 ## 4) Payment flow explained
