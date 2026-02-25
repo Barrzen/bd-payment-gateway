@@ -1,6 +1,7 @@
 # Development Setup
 
 This document defines the local setup flow for the Python binding crate (`bd-payment-gateway-py`) and typed facade package.
+It is for contributors building from source, not for normal `pip install` usage.
 
 ## Prerequisites
 

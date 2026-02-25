@@ -31,6 +31,12 @@ classifiers = [
   "Operating System :: OS Independent",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Barrzen/bd-payment-gateway#readme"
+Repository = "https://github.com/Barrzen/bd-payment-gateway"
+Documentation = "https://github.com/Barrzen/bd-payment-gateway/tree/main/docs"
+Issues = "https://github.com/Barrzen/bd-payment-gateway/issues"
+
 [dependency-groups]
 dev = [
   "maturin>=1.8,<2",
